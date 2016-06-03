@@ -1,0 +1,39 @@
+{
+  "name": "require-injector",
+  "version": "0.0.1",
+  "description": "Work like a IoC injector, dynamically replacing module name required in NodeJS require() and browser side CommonJS require() function ",
+  "main": "index.js",
+  "scripts": {
+    "test": "node_modules/.bin/jasmine"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dr-web-house/require-injector.git"
+  },
+  "keywords": [
+    "dependency",
+    "inject",
+    "IoC",
+    "require",
+    "browserify",
+    "webpack"
+  ],
+  "author": "Liu Jing",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dr-web-house/require-injector/issues"
+  },
+  "homepage": "https://github.com/dr-web-house/require-injector#readme",
+  "dependencies": {
+    "esprima": "^2.7.2",
+    "estraverse": "^4.2.0",
+    "lodash": "^4.13.1",
+    "mothership": "^0.3.0",
+    "patch-text": "^1.0.2",
+    "resolve": "^1.1.7",
+    "through2": "^2.0.1"
+  },
+  "devDependencies": {
+    "jasmine": "^2.4.1"
+  }
+}
