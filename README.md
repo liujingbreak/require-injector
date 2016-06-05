@@ -54,14 +54,15 @@ You can setup injection for JS file of specific packages, e.g. module1
 ...
 rj.fromPackage('module1')
 	.substitute('module1-dependencyA', 'someOtherPackage');
-// If module1 is a Browerisfy package
+// If module1 is a Browserify package
 rj.fromPackage('module1', require('browser-resolve').sync)
     .substitute('module1-dependencyA', 'someOtherPackage');
 ```
 
 If you are packing files to browser side by Browserify,
 ```js
-rj({resolve: require('browser-resolve').sync});
+var bresolve = require('browser-resolve').sync;
+rj({resolve: bresolve});
 rj.fromPackage('...')...
 ...
 var browserify = require('browserify');
@@ -102,7 +103,7 @@ fs.writeFileSync(filePath, replacedCode);
         If the package is a Browserify package, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve)`.sync` or `require.resolve`
 	- `opts`: optional, options object passed to [resolve](https://www.npmjs.com/package/resolve),
 
-	Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve) can locate.
+	Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve).
 
 	**returns** chainable FactoryMap
 
