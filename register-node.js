@@ -41,10 +41,22 @@ module.exports.testable = function() {
 };
 
 module.exports.fromPackage = function(package, resolveOpts) {
+
+	var resolveSync = resolve;
+	if (config.resolve) {
+		resolveSync = config.resolve;
+	}
+
+	if (_.isFunction(resolveOpts)) {
+		resolveSync = resolveOpts;
+		resolveOpts = arguments[2];
+	}
+
 	if (!resolveOpts) {
 		resolveOpts = config.resolveOpts;
 	}
-	var mainJsPath = resolve(package, resolveOpts);
+
+	var mainJsPath = resolveSync(package, resolveOpts);
 	var jsonPath = mothership(mainJsPath, function(json) {
 		return json.name === package;
 	}).path;

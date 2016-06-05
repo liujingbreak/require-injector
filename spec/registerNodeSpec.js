@@ -1,10 +1,14 @@
-var rn = require('../register-node');
+var rn = require('..');
 var Path = require('path');
+var bresolve = require('browser-resolve').sync;
 
 describe('register-node', () => {
 	it('.sortedPackagePathList should contains configured packages and', ()=> {
 		rn({
-			basedir: Path.resolve(__dirname, '..')
+			basedir: Path.resolve(__dirname, '..'),
+			resolveOpts: {
+				basedir: __dirname
+			}
 		})
 		.fromPackage('module2', {
 			basedir: __dirname
@@ -14,35 +18,27 @@ describe('register-node', () => {
 			})
 			.substitute('@b/bbb', 'module3');
 
-		rn.fromPackage('module1', {
-			basedir: __dirname
-		})
+		rn.fromPackage('module1')
 			.factory('aaa', function() {
 				return 'a';
 			})
 			.substitute('bbb', 'module3');
 
-		rn.fromDir('spec/dir2', {
-			basedir: __dirname
-		})
+		rn.fromDir('spec/dir2')
 			.factory('@a/aaa', function() {
 				return 'a';
 			})
 			.substitute('@b/bbb', 'module3')
 			.value('@c/ccc', 'c');
 
-		rn.fromDir('spec/dir1', {
-			basedir: __dirname
-		})
+		rn.fromDir('spec/dir1')
 			.factory('aaa', function() {
 				return 'a';
 			})
 			.substitute('bbb', 'module3');
 
 		rn.fromDir('spec/a');
-		rn.fromPackage('module2', {
-			basedir: __dirname
-		});
+		rn.fromPackage('module2');
 
 		console.log(rn.testable().sortedDirs);
 		var folders = rn.testable().sortedDirs.map(path => {
@@ -77,6 +73,35 @@ describe('register-node', () => {
 		expect(require('./dir1/test')).toBe('dir1 aexports-module3');
 		expect(require('./dir2/test')).toBe('dir2 aexports-module3c');
 		expect(require('./dir2/dir3')).toBe('dir3 a dir4');
+	});
+
+	it('browser resolve function should work as parameter for .fromePackage()', function() {
+		rn.cleanup();
+		rn();
+		expect(rn.testable().sortedDirs.length).toBe(0);
+		rn.fromPackage('module1', bresolve, {
+			paths: [__dirname + '/node_modules']
+		}).value('abc', 'ABC');
+		rn.fromPackage('@br/browser-module', bresolve, {
+			paths: [__dirname + '/node_modules']
+		}).value('abc', 'ABC');
+		console.log(rn.testable().sortedDirs);
+		expect(rn.testable().sortedDirs.length).toBe(2);
+	});
+
+	it('browser resolve function should work as global options', function() {
+		rn.cleanup();
+		rn({
+			resolve: bresolve,
+			resolveOpts: {
+				paths: [__dirname + '/node_modules']
+			}
+		});
+		expect(rn.testable().sortedDirs.length).toBe(0);
+		rn.fromPackage('module1').value('abc', 'ABC');
+		rn.fromPackage('@br/browser-module').value('abc', 'ABC');
+		console.log(rn.testable().sortedDirs);
+		expect(rn.testable().sortedDirs.length).toBe(2);
 	});
 
 });

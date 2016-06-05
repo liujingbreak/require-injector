@@ -54,10 +54,16 @@ You can setup injection for JS file of specific packages, e.g. module1
 ...
 rj.fromPackage('module1')
 	.substitute('module1-dependencyA', 'someOtherPackage');
+// If module1 is a Browerisfy package
+rj.fromPackage('module1', require('browser-resolve').sync)
+    .substitute('module1-dependencyA', 'someOtherPackage');
 ```
 
 If you are packing files to browser side by Browserify,
 ```js
+rj({resolve: require('browser-resolve').sync});
+rj.fromPackage('...')...
+...
 var browserify = require('browserify');
 var b = browserify();
 b.transform(rj.transform);
@@ -78,23 +84,25 @@ fs.writeFileSync(filePath, replacedCode);
 	Must call this function at as beginning as possible of your entry script.
 	It kidnaps Node's native API `Module.prototype.require()`, so every `require()`
 	call actually goes to its management.
-    - `options`: optional object parameter
+    - `options`: optional globale option
 
         | Property | Description
         | - | -
-        | _{string}_  basedir | set this value, you can use relative path in `.fromDir(path)`
-        | _{object}_  resolveOpts | set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
+        |  basedir | _{string}_ set this value, you can use relative path in `.fromDir(path)`
+        | resolve | _{function(id)}_, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`, you may also use Node API `require.resolve` or [browserResolve](https://www.npmjs.com/package/browser-resolve)`.sync`
+        | resolveOpts | _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
 
 
 2. #### .fromPackage( _{string}_ nodePackageName, _{object}_ opts)
 	Adding a package to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.\
 	**Parameters**:
 	- `nodePackageName`: Node package's name
-	- `opts`: options object passed to [resolve](https://www.npmjs.com/package/resolve),
-		underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package,
-		but also a _Browser_ side package which has a "`browser`" property instead
-		of "`main`" property in package.json, it is flexible as being any kind of package
-		that [resolve](https://www.npmjs.com/package/resolve) can locate.
+    - `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
+
+        If the package is a Browserify package, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve)`.sync` or `require.resolve`
+	- `opts`: optional, options object passed to [resolve](https://www.npmjs.com/package/resolve),
+
+	Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve) can locate.
 
 	**returns** chainable FactoryMap
 
@@ -138,7 +146,7 @@ fs.writeFileSync(filePath, replacedCode);
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with returned string of `JSON.stringify(anything)`
 
 7. #### .injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)
-    Parsing a matched file to esprima AST tree, looking for matched `require(module)` expression and replace them with proper injections.
+    Parsing a matched file to esprima AST tree, looking for matched `require(module)` expression and replace them with proper injections.\
     **Parameters**:
     - `filePath`: file path
     - `code`: content of file
@@ -147,8 +155,8 @@ fs.writeFileSync(filePath, replacedCode);
 8. #### .transform(filePath)
     A Browserify JS file transform function to replace `require()` expression with proper injection.
 
-
 9. #### .cleanup()
     Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
+
 
 Most of the functions in the package has been covered by unit test, except Browserify `.tranform` function, contribution is welcome

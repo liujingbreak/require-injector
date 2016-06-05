@@ -1,5 +1,5 @@
-var rr = require('../replace-require');
-var rn = require('../register-node');
+var rr = require('..').replace;
+var rn = require('..');
 var Path = require('path');
 var fs = require('fs');
 

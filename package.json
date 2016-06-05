@@ -1,6 +1,6 @@
 {
   "name": "require-injector",
-  "version": "0.0.3",
+  "version": "0.1.0",
   "description": "Injecting and replacing require() function in both NodeJS and browser side CommonJS framework like Browserify and Webpack",
   "main": "index.js",
   "scripts": {
@@ -35,6 +35,7 @@
     "through2": "^2.0.1"
   },
   "devDependencies": {
+    "browser-resolve": "^1.11.2",
     "jasmine": "^2.4.1"
   }
 }
