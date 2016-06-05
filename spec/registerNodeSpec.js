@@ -46,7 +46,7 @@ describe('register-node', () => {
 
 		console.log(rn.testable().sortedDirs);
 		var folders = rn.testable().sortedDirs.map(path => {
-			return Path.relative(__dirname, path);
+			return path.substring(__dirname.length + 1);
 		});
 		expect(folders).toEqual([
 			'a', 'dir1', 'dir2',
@@ -58,10 +58,10 @@ describe('register-node', () => {
 
 	it('.quickSearchDirByFile() should work', () => {
 		var foundDir = rn.testable().quickSearchDirByFile(Path.resolve(__dirname, 'dir1/hellow/world.js'));
-		expect(foundDir).toBe(Path.resolve(__dirname, 'dir1'));
+		expect(Path.resolve(foundDir)).toBe(Path.resolve(__dirname, 'dir1'));
 
 		foundDir = rn.testable().quickSearchDirByFile(Path.resolve(__dirname, 'node_modules/module1/hellow/world.js'));
-		expect(foundDir).toBe(Path.resolve(__dirname, 'node_modules/module1'));
+		expect(Path.resolve(foundDir)).toBe(Path.resolve(__dirname, 'node_modules/module1'));
 
 		foundDir = rn.testable().quickSearchDirByFile(Path.resolve(__dirname, 'node_modules/abc'));
 		expect(foundDir).toBe(null);

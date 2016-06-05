@@ -9,13 +9,13 @@ var oldRequire = Module.prototype.require;
 
 var sortedDirs = [];
 // var subDirMap = {}; // key is dir, value is array of sortedDirs
-var injectionSetting;
+var config;
 
 var injectionScopeMap = {}; // key is directory, value is FactoryMap
 
-module.exports = function(config) {
+module.exports = function(opts) {
 	Module.prototype.require = replacingRequire;
-	injectionSetting = config ? config : {};
+	config = opts ? opts : {};
 	return module.exports;
 };
 
@@ -27,7 +27,7 @@ module.exports.cleanup = function() {
 	_.each(_.keys(injectionScopeMap), function(key) {
 		delete injectionScopeMap[key];
 	});
-	injectionSetting = {};
+	config = {};
 };
 
 module.exports.testable = function() {
@@ -41,6 +41,9 @@ module.exports.testable = function() {
 };
 
 module.exports.fromPackage = function(package, resolveOpts) {
+	if (!resolveOpts) {
+		resolveOpts = config.resolveOpts;
+	}
 	var mainJsPath = resolve(package, resolveOpts);
 	var jsonPath = mothership(mainJsPath, function(json) {
 		return json.name === package;
@@ -48,14 +51,13 @@ module.exports.fromPackage = function(package, resolveOpts) {
 	if (jsonPath == null) {
 		throw new Error(package + ' is not Found');
 	}
-	var path = Path.dirname(jsonPath).replace(/\\/g, '/');
+	var path = Path.dirname(jsonPath);
 	return fromDir(path, sortedDirs);
 };
 
 module.exports.fromDir = function(dir) {
-	var path = injectionSetting.basedir ?
-		Path.resolve(injectionSetting.basedir, dir) : Path.resolve(dir);
-	path = path.replace(/\\/g, '/');
+	var path = config.basedir ?
+		Path.resolve(config.basedir, dir) : Path.resolve(dir);
 	return fromDir(path, sortedDirs);
 };
 
@@ -66,6 +68,9 @@ module.exports.fromDir = function(dir) {
  * @return {[type]}      [description]
  */
 function fromDir(path, dirs) {
+	if (Path.sep === '\\') {
+		path = path.replace(/\\/g, '/');
+	}
 	var idx = _.sortedIndex(dirs, path);
 	if (dirs[idx] !== path) {
 		if (idx > 0 && _.startsWith(path, dirs[idx-1] + '/')) {
@@ -107,31 +112,18 @@ FactoryMap.prototype = {
 	}
 };
 
-var relativePathPattern = /^(?:\.\/|\.\.\/|[\/\\])/;
-
-// function buildPackagePathNameMap(packages, resolveOpts) {
-// 	_.each(packages, function(x, name) {
-// 		var mainJsPath = resolve(name, resolveOpts);
-// 		var jsonPath = mothership(mainJsPath, function(json) {
-// 			return json.name === name;
-// 		}).path;
-// 		var path = Path.dirname(jsonPath).replace(/\\/g, '/');
-// 		packagePath2Name[path] = name;
-// 		sortedPackagePathList.push(path);
-// 	});
-// 	sortedPackagePathList.sort();
-// }
+var packageNamePattern = /^[^\.\/\\][^:]+/;
 
 function replacingRequire(path) {
-	if (relativePathPattern.test(path)) {
-		return oldRequire.apply(this, arguments);
-	} else {
+	if (packageNamePattern.test(path)) {
 		return inject(this, path);
+	} else {
+		return oldRequire.apply(this, arguments);
 	}
 }
 
 function inject(calleeModule, name) {
-	//var dir = quickSearchDirByFile(injectionSetting.basedir ? Path.relative(injectionSetting.basedir, calleeModule.id) : calleeModule.id);
+	//var dir = quickSearchDirByFile(config.basedir ? Path.relative(config.basedir, calleeModule.id) : calleeModule.id);
 	var dir = quickSearchDirByFile(calleeModule.id);
 	if (dir) {
 		var factoryMap = injectionScopeMap[dir];
@@ -152,6 +144,9 @@ function inject(calleeModule, name) {
 }
 
 function quickSearchDirByFile(file) {
+	if (Path.sep === '\\') {
+		file = file.replace(/\\/g, '/');
+	}
 	var idx = findDirIndexOfFile(file, sortedDirs);
 	if (idx !== -1) {
 		return sortedDirs[idx];

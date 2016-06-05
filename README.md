@@ -78,9 +78,16 @@ fs.writeFileSync(filePath, replacedCode);
 	Must call this function at as beginning as possible of your entry script.
 	It kidnaps Node's native API `Module.prototype.require()`, so every `require()`
 	call actually goes to its management.
+    - `options`: optional object parameter
+
+        | Property | Description
+        | - | -
+        | _{string}_  basedir | set this value, you can use relative path in `.fromDir(path)`
+        | _{object}_  resolveOpts | set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
+
 
 2. #### .fromPackage( _{string}_ nodePackageName, _{object}_ opts)
-	Adding a package to injection setting, all files under this package's directory will be injectable.
+	Adding a package to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.\
 	**Parameters**:
 	- `nodePackageName`: Node package's name
 	- `opts`: options object passed to [resolve](https://www.npmjs.com/package/resolve),
@@ -93,10 +100,11 @@ fs.writeFileSync(filePath, replacedCode);
 
 3. #### .fromDir( _{string}_ directory)
 	Adding a directory to injection setting, all files under this directory will be injectable.
+    > The internal directory list are sorted and can be binary searched when `Module.prototype.require()` is called against each file. So the performance of dynamic injection should be not bad
 
 	**Parameters**:
-	- `directory`: if this is a relative path, you must call `rj({basedir: rootDir})`
-		with a option object to tell a base directory
+	- `directory`: if this is a relative path, you must call `requireInjector({basedir: rootDir})`
+		to tell a base directory
 		> It doesn't not allow to add any overlap directories like a parent directory or a sub-directory of any added directories, it will throw an Error for that case.
 
 		e.g.
@@ -136,8 +144,11 @@ fs.writeFileSync(filePath, replacedCode);
     - `code`: content of file
     - `ast`: optional, if you have already parsed code to [esprima](https://www.npmjs.com/package/esprima) AST tree, pass it to this function which helps to speed up process by skip parsing code one more time.
 
-8. #### .transform
+8. #### .transform(filePath)
     A Browserify JS file transform function to replace `require()` expression with proper injection.
 
 
-> Most of the functions in the package has been covered by unit test, except Browserify `.tranform` function, contribution is welcome
+9. #### .cleanup()
+    Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
+
+Most of the functions in the package has been covered by unit test, except Browserify `.tranform` function, contribution is welcome
