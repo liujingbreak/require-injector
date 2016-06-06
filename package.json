@@ -1,6 +1,6 @@
 {
   "name": "require-injector",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Injecting and replacing require() function in both NodeJS and browser side CommonJS framework like Browserify and Webpack",
   "main": "index.js",
   "scripts": {
@@ -19,6 +19,9 @@
     "webpack",
     "transform"
   ],
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "author": "Liu Jing",
   "license": "MIT",
   "bugs": {
@@ -29,6 +32,7 @@
     "esprima": "^2.7.2",
     "estraverse": "^4.2.0",
     "lodash": "^4.13.1",
+    "log4js": "^0.6.36",
     "mothership": "^0.3.0",
     "patch-text": "^1.0.2",
     "resolve": "^1.1.7",

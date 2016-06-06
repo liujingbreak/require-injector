@@ -3,12 +3,11 @@ var _ = require('lodash');
 var resolve = require('resolve').sync;
 var mothership = require('mothership').sync;
 var Path = require('path');
+var log = require('log4js').getLogger('require-injector.register-node');
 
 var oldRequire = Module.prototype.require;
-//var sortedPackagePathList = [];
 
 var sortedDirs = [];
-// var subDirMap = {}; // key is dir, value is array of sortedDirs
 var config;
 
 var injectionScopeMap = {}; // key is directory, value is FactoryMap
@@ -40,7 +39,25 @@ module.exports.testable = function() {
 	};
 };
 
-module.exports.fromPackage = function(packageName, resolveOpts) {
+/**
+ * @param  {string | array} packageName
+ * @param  {[type]} resolveOpts [description]
+ * @return {[type]}             [description]
+ */
+module.exports.fromPackage = function(packageName, resolveFn, resolveOpts) {
+	if (_.isArray(packageName)) {
+		var args = [].slice.call(arguments);
+		var factoryMaps = _.map(packageName, single => {
+			args[0] = single;
+			return fromPackage.apply(this, args);
+		});
+		return new FactoryMapCollection(factoryMaps);
+	} else {
+		return fromPackage.apply(this, arguments);
+	}
+};
+
+function fromPackage(packageName, resolveOpts) {
 	var resolveSync = resolve;
 	if (config.resolve) {
 		resolveSync = config.resolve;
@@ -63,14 +80,27 @@ module.exports.fromPackage = function(packageName, resolveOpts) {
 		throw new Error(packageName + ' is not Found');
 	}
 	var path = Path.dirname(jsonPath);
-	return fromDir(path, sortedDirs);
-};
+	return _fromDir(path, sortedDirs);
+}
 
 module.exports.fromDir = function(dir) {
+	if (_.isArray(dir)) {
+		var args = [].slice.call(arguments);
+		var factoryMaps = _.map(dir, single => {
+			args[0] = single;
+			return fromDir.apply(this, args);
+		});
+		return new FactoryMapCollection(factoryMaps);
+	} else {
+		return fromDir.apply(this, arguments);
+	}
+};
+
+function fromDir(dir) {
 	var path = config.basedir ?
 		Path.resolve(config.basedir, dir) : Path.resolve(dir);
-	return fromDir(path, sortedDirs);
-};
+	return _fromDir(path, sortedDirs);
+}
 
 /**
  * Recursively build sortedDirs, subDirMap
@@ -78,7 +108,7 @@ module.exports.fromDir = function(dir) {
  * @param  {[type]} dirs [description]
  * @return {[type]}      [description]
  */
-function fromDir(path, dirs) {
+function _fromDir(path, dirs) {
 	if (Path.sep === '\\') {
 		path = path.replace(/\\/g, '/');
 	}
@@ -124,6 +154,30 @@ FactoryMap.prototype = {
 	}
 };
 
+function FactoryMapCollection(factoryMaps) {
+	this.maps = factoryMaps;
+}
+FactoryMapCollection.prototype = {
+	factory: function() {
+		this.maps.forEach(factoryMap => {
+			factoryMap.factory.apply(factoryMap, arguments);
+		});
+		return this;
+	},
+	substitute: function(name, anotherName) {
+		this.maps.forEach(factoryMap => {
+			factoryMap.substitute.apply(factoryMap, arguments);
+		});
+		return this;
+	},
+	value: function(name, value) {
+		this.maps.forEach(factoryMap => {
+			factoryMap.value.apply(factoryMap, arguments);
+		});
+		return this;
+	}
+};
+
 var packageNamePattern = /^[^\.\/\\][^:]+/;
 
 function replacingRequire(path) {
@@ -140,16 +194,27 @@ function inject(calleeModule, name) {
 	if (dir) {
 		var factoryMap = injectionScopeMap[dir];
 		var injector = factoryMap.getInjector(name);
-		if (_.has(injector, 'factory')) {
-			if (_.isFunction(injector.factory)) {
-				return injector.factory(calleeModule.id);
-			} else {
-				return injector.factory;
+		if (injector) {
+			if (config.debug) {
+				log.debug('inject ' + name + ' to ' + dir);
 			}
-		} else if (_.has(injector, 'value')) {
-			return injector.value;
-		} else if (_.has(injector, 'substitute')) {
-			return oldRequire.call(calleeModule, injector.substitute);
+			if (_.has(injector, 'factory')) {
+				if (_.isFunction(injector.factory)) {
+					return injector.factory(calleeModule.id);
+				} else {
+					return injector.factory;
+				}
+			} else if (_.has(injector, 'value')) {
+				if (_.has(injector.value, 'value')) {
+					return injector.value.value;
+				} else {
+					return injector.value;
+				}
+			} else if (_.has(injector, 'substitute')) {
+				return oldRequire.call(calleeModule, injector.substitute);
+			} else if (_.has(injector, 'variable')) {
+				return injector.variable;
+			}
 		}
 	}
 	return oldRequire.call(calleeModule, name);

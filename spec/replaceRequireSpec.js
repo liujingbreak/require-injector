@@ -1,5 +1,5 @@
 var rr = require('..').replace;
-var rn = require('..');
+var rj = require('..');
 var Path = require('path');
 var fs = require('fs');
 
@@ -25,14 +25,14 @@ describe('replace-require', ()=> {
 
 	describe('injectToFile()', ()=> {
 		beforeAll(()=>{
-			rn.cleanup();
+			rj.cleanup();
 
-			rn({basedir: __dirname});
+			rj({basedir: __dirname});
 
-			rn.fromPackage('module1', {basedir: __dirname})
+			rj.fromPackage('module1', {basedir: __dirname})
 			.substitute('bbb', 'aaa');
 
-			rn.fromPackage('module2', {basedir: __dirname})
+			rj.fromPackage('module2', {basedir: __dirname})
 			.value('@a/aaa', ['AAA']);
 		});
 
@@ -53,6 +53,22 @@ describe('replace-require', ()=> {
 			var code = fs.readFileSync(file, 'utf8');
 			var result = rr.injectToFile('c:\\abc\\efg.js', code);
 			expect(result).toBe(code);
+		});
+
+		it('.value({replacement: string}) should work', ()=> {
+			rj.fromDir(Path.resolve('test'))
+				.value('donnotStrinifyMe', {
+					replacement: 'REPLACED'
+				});
+			var result = rr.injectToFile(Path.resolve('test/efg.js'), 'require("donnotStrinifyMe");');
+			expect(result).toBe('REPLACED;');
+		});
+
+		it('.factory() should work', ()=> {
+			rj.fromDir(Path.resolve('test'))
+				.factory('hellow', function() {return 1;});
+			var result = rr.injectToFile(Path.resolve('test/efg.js'), 'require("hellow");');
+			expect(eval(result)).toBe(1);
 		});
 	});
 });

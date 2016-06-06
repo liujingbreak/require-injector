@@ -18,14 +18,14 @@ Assume you have project structure like below,
 ```
 /
 ├─── src
-|      ├─── dir1
-|      |     └─── some1.js
-|      └─── dir2
-|            └─── some2.js
+|    ├─── dir1
+|    |     └─── some1.js
+|    └─── dir2
+|          └─── some2.js
 ├─── app.js
 └─── node_modules
-       ├─── module1/index.js, package.json, ...
-       └─── module2/index.js, package.json, ...
+      ├─── module1/index.js, package.json, ...
+      └─── module2/index.js, package.json, ...
 ```
 
 In src/dir1/some1.js, there is `require()` calling to `module1`
@@ -63,7 +63,7 @@ If you are packing files to browser side by Browserify,
 ```js
 var bresolve = require('browser-resolve').sync;
 rj({resolve: bresolve});
-rj.fromPackage('...')...
+rj.fromPackage('...')
 ...
 var browserify = require('browserify');
 var b = browserify();
@@ -91,12 +91,13 @@ fs.writeFileSync(filePath, replacedCode);
         |  basedir | _{string}_ set this value, you can use relative path in `.fromDir(path)`
         | resolve | _{function(id)}_, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`, you may also use Node API `require.resolve` or [browserResolve](https://www.npmjs.com/package/browser-resolve)`.sync`
         | resolveOpts | _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
+		| debug | if true, log4js will be enabled to print out logs
 
 
-- #### .fromPackage( _{string}_ nodePackageName, _{function}_ resolve, _{object}_ opts)<a name="api2"></a>
+- #### .fromPackage( _{string|array}_ nodePackageName, _{function}_ resolve, _{object}_ opts)<a name="api2"></a>
 	Adding a package to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.\
 	_Parameters_:
-	- `nodePackageName`: Node package's name
+	- `nodePackageName`: Node package's name or array of multiple package names
     - `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
 
         If the package is a Browserify package, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve)`.sync` or `require.resolve`
@@ -123,11 +124,11 @@ fs.writeFileSync(filePath, replacedCode);
 
 	_returns_ chainable FactoryMap
 
-- #### .substitute(_{string}_ requiredModule, _{string}_ replaceToModule)<a name="api4"></a>
+- #### .substitute(_{string}_ requiredModule, _{string}_ newModule)<a name="api4"></a>
 	Replacing a required module with requiring another module.\
 	_Parameters_:
 	- `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
-	- `replaceToModule`: the new module name is replaced to
+	- `newModule`: the new module name that is replaced with.
 
 
 - #### .factory(_{string}_ requiredModule, _{function}_ factory)<a name="api5"></a>
@@ -136,20 +137,36 @@ fs.writeFileSync(filePath, replacedCode);
     - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
     - `factory`: A function that returns a value which then will be replaced to the original module of `requireMaodule`.
 
-        When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression literally with the `toString()` of the factory function: `factory.toString()`
+        When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
+		```js
+		// require('requiredModule'); ->
+		'(' + factory.toString() + ')()';
+		```
 
-
-- #### .value(_{string}_ requiredModule, _{*}_ anything)<a name="api6"></a>
+- #### .value(_{string}_ requiredModule, _{*|object}_ value)<a name="api6"></a>
     Replacing a required module with any object or primitive value.\
     _Parameters_:
     - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
-    - anything: the value be replaced to `requiredModule`.
+    - `value`: the value be replaced to `requiredModule` exports.
 
-        When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with returned string of `JSON.stringify(anything)`
+        When `.injectToFile()` is called or `.transform` is called for Browserify, it actually replaces entire `require('requiredModule')` expression with result of `JSON.stringify(anything)`.
+
+        Sometimes, the value is variable reference,
+		you wouldn't want `JSON.stringify` for it, you can use an object expression:
+         - _{string}_ `value.replacement`: The replaced string literal as variable expression
+         - _{string}_ `value.value`: Node require injection value
+		```js
+		rj.fromDir('dir1')
+		.value('replaceMe', {
+			replacement: 'window.jQuery', // for Browserify transform
+			value: cheerio   // for Node require() injection
+		})
+		```
 
 
 - #### .injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)<a name="api7"></a>
-    Parsing a matched file to esprima AST tree, looking for matched `require(module)` expression and replace them with proper injections.\
+    Here "inject" is actually "replacement".
+    Parsing a matched file to esprima AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.\
     _Parameters_:
     - `filePath`: file path
     - `code`: content of file
@@ -162,4 +179,6 @@ fs.writeFileSync(filePath, replacedCode);
     Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
 
 -----
+Now you can require some cool fake or abstract module name in your code, and inject/replace them with the real package or value.
+
 Most of the functions in the package have been covered by unit test, except Browserify `.tranform` function, contribution is welcome.

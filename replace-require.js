@@ -66,11 +66,17 @@ function injectToFile(filePath, code, ast) {
 		var replacement = {};
 		_.each(factoryMap.requireMap, function(injector, name) {
 			if (_.has(injector, 'factory')) {
-				replacement[name] = injector.factory.toString();
+				replacement[name] = '(' + injector.factory.toString() + ')()';
 			} else if (_.has(injector, 'substitute')) {
 				replacement[name] = 'require(\'' + injector.substitute + '\')';
 			} else if (_.has(injector, 'value')) {
-				replacement[name] = JSON.stringify(injector.value);
+				if (_.has(injector.value, 'replacement')) {
+					replacement[name] = injector.value.replacement;
+				} else {
+					replacement[name] = JSON.stringify(injector.value);
+				}
+			} else if (_.has(injector, 'variable')) {
+				replacement[name] = injector.variable;
 			}
 		});
 		return replace(code, replacement, ast);
