@@ -40,8 +40,7 @@ module.exports.testable = function() {
 	};
 };
 
-module.exports.fromPackage = function(package, resolveOpts) {
-
+module.exports.fromPackage = function(packageName, resolveOpts) {
 	var resolveSync = resolve;
 	if (config.resolve) {
 		resolveSync = config.resolve;
@@ -56,12 +55,12 @@ module.exports.fromPackage = function(package, resolveOpts) {
 		resolveOpts = config.resolveOpts;
 	}
 
-	var mainJsPath = resolveSync(package, resolveOpts);
+	var mainJsPath = resolveSync(packageName, resolveOpts);
 	var jsonPath = mothership(mainJsPath, function(json) {
-		return json.name === package;
+		return json.name === packageName;
 	}).path;
 	if (jsonPath == null) {
-		throw new Error(package + ' is not Found');
+		throw new Error(packageName + ' is not Found');
 	}
 	var path = Path.dirname(jsonPath);
 	return fromDir(path, sortedDirs);
@@ -85,9 +84,9 @@ function fromDir(path, dirs) {
 	}
 	var idx = _.sortedIndex(dirs, path);
 	if (dirs[idx] !== path) {
-		if (idx > 0 && _.startsWith(path, dirs[idx-1] + '/')) {
+		if (idx > 0 && _.startsWith(path, dirs[idx - 1] + '/')) {
 			// path is sub directory of dirs[idx-1]
-			var parentDir = dirs[idx-1];
+			var parentDir = dirs[idx - 1];
 			throw new Error('Overlap directory setting with ' + parentDir);
 		} else if (dirs[idx] && _.startsWith(dirs[idx], path + '/')) {
 			// path is parent dir of dirs[idx]
@@ -115,6 +114,7 @@ FactoryMap.prototype = {
 	},
 	value: function(name, value) {
 		this.requireMap[name] = {value: value};
+		return this;
 	},
 	getInjector: function(name) {
 		if (_.has(this.requireMap, name)) {
@@ -148,7 +148,7 @@ function inject(calleeModule, name) {
 			}
 		} else if (_.has(injector, 'value')) {
 			return injector.value;
-		}else if (_.has(injector, 'substitute')) {
+		} else if (_.has(injector, 'substitute')) {
 			return oldRequire.call(calleeModule, injector.substitute);
 		}
 	}

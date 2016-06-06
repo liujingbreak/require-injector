@@ -49,7 +49,6 @@ describe('register-node', () => {
 			'node_modules/module1',
 			'node_modules/module2'
 		]);
-
 	});
 
 	it('.quickSearchDirByFile() should work', () => {
@@ -104,4 +103,16 @@ describe('register-node', () => {
 		expect(rn.testable().sortedDirs.length).toBe(2);
 	});
 
+	it('should be chainable', ()=>{
+		rn.cleanup();
+		rn({basedir: __dirname, resolveOpts: {basedir: __dirname}});
+		rn.fromPackage('module1')
+			.value('cba', 123)
+			.value('xyz', 321)
+			.factory('xxx', ()=> {
+				return 456;
+			})
+			.substitute('yyy', 'aaa')
+			.substitute('zzz', 'zzz');
+	});
 });
