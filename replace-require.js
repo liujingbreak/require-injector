@@ -48,13 +48,15 @@ function browserifyTransform(file) {
 		return through();
 	}
 	var data = '';
-    return through(write, end);
+	return through(write, end);
 
-    function write (buf, enc, next) { data += buf; next(); }
-    function end (next) {
-        this.push(injectToFile(file, data));
-        next();
-    }
+	function write(buf, enc, next) {
+		data += buf; next();
+	}
+	function end(next) {
+		this.push(injectToFile(file, data));
+		next();
+	}
 }
 
 function injectToFile(filePath, code, ast) {

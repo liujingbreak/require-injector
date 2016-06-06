@@ -69,9 +69,9 @@ var browserify = require('browserify');
 var b = browserify();
 b.transform(rj.transform);
 ```
-It will use [esprima](https://www.npmjs.com/package/esprima) language recoganizer to parse each JS file and replace line of `require("matchedModule")`.
+It uses [esprima](https://www.npmjs.com/package/esprima) language recoganizer to parse each JS file and replace line of `require("matchedModule")`.
 
-Or you just want to write your replacement function or Browserify, Webpack transform, just call `.injectToFile`,
+Or you just want to write your own replacement function for Browserify and Webpack, just call `.injectToFile`,
 ```js
 var fs = require('fs');
 var code = fs.readFileSync(filePath, 'utf8');
@@ -94,7 +94,7 @@ fs.writeFileSync(filePath, replacedCode);
         | resolveOpts | _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
 
 
-2. #### .fromPackage( _{string}_ nodePackageName, _{object}_ opts)
+2. #### .fromPackage( _{string}_ nodePackageName, _{function}_ resolve, _{object}_ opts)
 	Adding a package to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.\
 	**Parameters**:
 	- `nodePackageName`: Node package's name
@@ -130,6 +130,7 @@ fs.writeFileSync(filePath, replacedCode);
 	- `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
 	- `replaceToModule`: the new module name is replaced to
 
+
 5. #### .factory(_{string}_ requiredModule, _{function}_ factory)
     Replacing a required module with a function returned value.\
     **Parameters**:
@@ -137,6 +138,7 @@ fs.writeFileSync(filePath, replacedCode);
     - `factory`: A function that returns a value which then will be replaced to the original module of `requireMaodule`.
 
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression literally with the `toString()` of the factory function: `factory.toString()`
+
 
 6. #### .value(_{string}_ requiredModule, _{*}_ anything)
     Replacing a required module with any object or primitive value.\
@@ -146,6 +148,7 @@ fs.writeFileSync(filePath, replacedCode);
 
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with returned string of `JSON.stringify(anything)`
 
+
 7. #### .injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)
     Parsing a matched file to esprima AST tree, looking for matched `require(module)` expression and replace them with proper injections.\
     **Parameters**:
@@ -153,11 +156,13 @@ fs.writeFileSync(filePath, replacedCode);
     - `code`: content of file
     - `ast`: optional, if you have already parsed code to [esprima](https://www.npmjs.com/package/esprima) AST tree, pass it to this function which helps to speed up process by skip parsing code one more time.
 
+
 8. #### .transform(filePath)
     A Browserify JS file transform function to replace `require()` expression with proper injection.
+
 
 9. #### .cleanup()
     Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
 
-
-Most of the functions in the package has been covered by unit test, except Browserify `.tranform` function, contribution is welcome
+-----
+Most of the functions in the package have been covered by unit test, except Browserify `.tranform` function, contribution is welcome.
