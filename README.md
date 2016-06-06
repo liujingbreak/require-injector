@@ -80,7 +80,7 @@ fs.writeFileSync(filePath, replacedCode);
 ```
 
 ### API
-1. #### require('require-injector')( _{object}_ options )<a name="api1"></a>
+- #### require('require-injector')( _{object}_ options )<a name="api1"></a>
 	Must call this function at as beginning as possible of your entry script.
 	It kidnaps Node's native API `Module.prototype.require()`, so every `require()`
 	call actually goes to its management.
@@ -93,9 +93,9 @@ fs.writeFileSync(filePath, replacedCode);
         | resolveOpts | _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
 
 
-2. #### .fromPackage( _{string}_ nodePackageName, _{function}_ resolve, _{object}_ opts)<a name="api2"></a>
+- #### .fromPackage( _{string}_ nodePackageName, _{function}_ resolve, _{object}_ opts)<a name="api2"></a>
 	Adding a package to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.\
-	**Parameters**:
+	_Parameters_:
 	- `nodePackageName`: Node package's name
     - `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
 
@@ -104,13 +104,13 @@ fs.writeFileSync(filePath, replacedCode);
 
 	Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve).
 
-	**returns** chainable FactoryMap
+	_returns_ chainable FactoryMap
 
-3. #### .fromDir( _{string}_ directory)<a name="api3"></a>
+- #### .fromDir( _{string}_ directory)<a name="api3"></a>
 	Adding a directory to injection setting, all files under this directory will be injectable.
     > The internal directory list are sorted and can be binary searched when `Module.prototype.require()` is called against each file. So the performance of dynamic injection should be not bad
 
-	**Parameters**:
+	_Parameters_:
 	- `directory`: if this is a relative path, you must call `requireInjector({basedir: rootDir})`
 		to tell a base directory
 		> It doesn't not allow to add any overlap directories like a parent directory or a sub-directory of any added directories, it will throw an Error for that case.
@@ -121,46 +121,44 @@ fs.writeFileSync(filePath, replacedCode);
 		rj.fromDir('src/dir1/sub-dir'); //.fromDir() it will throw Error
 		```
 
-	**returns** chainable FactoryMap
+	_returns_ chainable FactoryMap
 
-4. #### .substitute(_{string}_ requiredModule, _{string}_ replaceToModule)<a name="api4"></a>
+- #### .substitute(_{string}_ requiredModule, _{string}_ replaceToModule)<a name="api4"></a>
 	Replacing a required module with requiring another module.\
-	**Parameters**:
+	_Parameters_:
 	- `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
 	- `replaceToModule`: the new module name is replaced to
 
 
-5. #### .factory(_{string}_ requiredModule, _{function}_ factory)<a name="api5"></a>
+- #### .factory(_{string}_ requiredModule, _{function}_ factory)<a name="api5"></a>
     Replacing a required module with a function returned value.\
-    **Parameters**:
+    _Parameters_:
     - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
     - `factory`: A function that returns a value which then will be replaced to the original module of `requireMaodule`.
 
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression literally with the `toString()` of the factory function: `factory.toString()`
 
 
-6. #### .value(_{string}_ requiredModule, _{*}_ anything)<a name="api6"></a>
+- #### .value(_{string}_ requiredModule, _{*}_ anything)<a name="api6"></a>
     Replacing a required module with any object or primitive value.\
-    **Parameters**:
+    _Parameters_:
     - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
     - anything: the value be replaced to `requiredModule`.
 
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with returned string of `JSON.stringify(anything)`
 
 
-7. #### .injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)<a name="api7"></a>
+- #### .injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)<a name="api7"></a>
     Parsing a matched file to esprima AST tree, looking for matched `require(module)` expression and replace them with proper injections.\
-    **Parameters**:
+    _Parameters_:
     - `filePath`: file path
     - `code`: content of file
     - `ast`: optional, if you have already parsed code to [esprima](https://www.npmjs.com/package/esprima) AST tree, pass it to this function which helps to speed up process by skip parsing code one more time.
 
-
-8. #### .transform(filePath)<a name="api8"></a>
+- #### .transform(filePath)<a name="api8"></a>
     A Browserify JS file transform function to replace `require()` expression with proper injection.
 
-
-9. #### .cleanup()<a name="api9"></a>
+- #### .cleanup()<a name="api9"></a>
     Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
 
 -----
