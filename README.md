@@ -14,6 +14,7 @@ npm install require-injector
 ```
 
 ### Setup
+
 Assume you have project structure like below,
 ```
 /
@@ -78,6 +79,11 @@ var code = fs.readFileSync(filePath, 'utf8');
 var replacedCode = rj.injectToFile(filePath, code);
 fs.writeFileSync(filePath, replacedCode);
 ```
+
+### Solution for NodeJS and browser environment
+- For NodeJS, the injector kidnaps Node's native API `Module.prototype.require()`, so that each `require()` call goes to injector's control, it returns injecting value according to callee file's id (file path).
+
+- For browsers, if you are packing your code by any tool like Browsersify and Webpack, this module plays a role of `tranform` or `replacer`, parsing JS code and replacing `require()` expression whith stringified injecting value.
 
 ### API
 - #### require('require-injector')( _{object}_ options )<a name="api1"></a>
@@ -149,12 +155,12 @@ fs.writeFileSync(filePath, replacedCode);
     - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
     - `value`: the value be replaced to `requiredModule` exports.
 
-        When `.injectToFile()` is called or `.transform` is called for Browserify, it actually replaces entire `require('requiredModule')` expression with result of `JSON.stringify(anything)`.
+        When `.injectToFile()` is called or `.transform` is used for Browserify, meaning it is not a Node environment, the solution is actually replacing entire `require('requiredModule')` expression with result of `JSON.stringify(value)`.
 
         Sometimes, the value is variable reference,
 		you wouldn't want `JSON.stringify` for it, you can use an object expression:
          - _{string}_ `value.replacement`: The replaced string literal as variable expression
-         - _{string}_ `value.value`: Node require injection value
+         - _{object}_ `value.value`: Node require injection value
 		```js
 		rj.fromDir('dir1')
 		.value('replaceMe', {
