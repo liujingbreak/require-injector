@@ -38,20 +38,20 @@ describe('replace-require', ()=> {
 
 		it('.substitute() should work for sample module1', ()=> {
 			var file = Path.resolve(__dirname, 'node_modules/module1/index.js');
-			var result = rr.injectToFile(file, fs.readFileSync(file, 'utf8'));
+			var result = rj.injectToFile(file, fs.readFileSync(file, 'utf8'));
 			expect(result).toBe('module.exports = \'module1 \' + require(\'aaa\');\n');
 		});
 
 		it('.value() should do JSON stringified for sample module2', ()=> {
 			var file = Path.resolve(__dirname, 'node_modules/module2/index.js');
-			var result = rr.injectToFile(file, fs.readFileSync(file, 'utf8'));
+			var result = rj.injectToFile(file, fs.readFileSync(file, 'utf8'));
 			expect(result).toBe('module.exports = \'module2 \' + ["AAA"];\n');
 		});
 
 		it('nothing should be changed if file path does not match any injection setting', ()=> {
 			var file = Path.resolve(__dirname, 'node_modules/module1/index.js');
 			var code = fs.readFileSync(file, 'utf8');
-			var result = rr.injectToFile('c:\\abc\\efg.js', code);
+			var result = rj.injectToFile('c:\\abc\\efg.js', code);
 			expect(result).toBe(code);
 		});
 
@@ -60,14 +60,14 @@ describe('replace-require', ()=> {
 				.value('donnotStrinifyMe', {
 					replacement: 'REPLACED'
 				});
-			var result = rr.injectToFile(Path.resolve('test/efg.js'), 'require("donnotStrinifyMe");');
+			var result = rj.injectToFile(Path.resolve('test/efg.js'), 'require("donnotStrinifyMe");');
 			expect(result).toBe('REPLACED;');
 		});
 
 		it('.factory() should work', ()=> {
 			rj.fromDir(Path.resolve('test'))
 				.factory('hellow', function() {return 1;});
-			var result = rr.injectToFile(Path.resolve('test/efg.js'), 'require("hellow");');
+			var result = rj.injectToFile(Path.resolve('test/efg.js'), 'require("hellow");');
 			expect(eval(result)).toBe(1);
 		});
 	});
