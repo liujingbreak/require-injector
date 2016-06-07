@@ -59,6 +59,15 @@ function browserifyTransform(file) {
 	}
 }
 
+/**
+ * Here "inject" is actually "replacement".
+ Parsing a matched file to Esprima AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.
+ * @name injectToFile
+ * @param  {string} filePath file path
+ * @param  {string} code     content of file
+ * @param  {object} ast      optional, if you have already parsed code to[esrima](https://www.npmjs.com/package/esprima) AST tree with `{range: true}` option, pass it to this function which helps to speed up process by skip parsing again.
+ * @return {string}          replaced source code, if there is no injectable `require()`, same source code will be returned.
+ */
 function injectToFile(filePath, code, ast) {
 	var dir = rn.quickSearchDirByFile(filePath);
 	if (dir) {

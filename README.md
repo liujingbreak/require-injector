@@ -99,7 +99,7 @@ fs.writeFileSync(filePath, replacedCode);
 
 
 - #### fromPackage( _{string|array}_ nodePackageName, _{function}_ resolve, _{object}_ opts)<a name="api2"></a>
-	Adding a package to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.
+	Adding one or multiple packages to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.
 	##### Parameters
 	- `nodePackageName`: Node package's name or array of multiple package names
     - `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
@@ -111,8 +111,8 @@ fs.writeFileSync(filePath, replacedCode);
 
 	_returns_ chainable FactoryMap
 
-- #### fromDir( _{string}_ directory)<a name="api3"></a>
-	Adding a directory to injection setting, all files under this directory will be injectable.
+- #### fromDir( _{string|array}_ directory)<a name="api3"></a>
+	Adding one or multiple directories to injection setting, all files under this directory will be injectable.
     > The internal directory list are sorted and can be binary searched when `Module.prototype.require()` is called against each file. So the performance of dynamic injection should be not bad
 
 	##### Parameters
@@ -142,7 +142,9 @@ fs.writeFileSync(filePath, replacedCode);
 	##### Parameters
 	- `filePath`: file path
 	- `code`: content of file
-	- `ast`: optional, if you have already parsed code to[esrima](https://www.npmjs.com/package/esprima) AST tree with `{range: true}` option, pass it to this function which helps to speed up process by ski parsing code one more time.
+	- `ast`: optional, if you have already parsed code to[esrima](https://www.npmjs.com/package/esprima) AST tree with `{range: true}` option, pass it to this function which helps to speed up process by skip parsing again.
+
+	_returns_ replaced source code, if there is no injectable `require()`, same source code will be returned.
 
 - #### cleanup()<a name="api9"></a>
     Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
@@ -188,6 +190,7 @@ fs.writeFileSync(filePath, replacedCode);
 		})
 		```
 	_returns_ chainable FactoryMap
+
 
 -----
 Now you can require some cool fake or abstract module name in your code, and inject/replace them with the real package or value.
