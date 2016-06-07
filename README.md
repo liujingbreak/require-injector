@@ -91,7 +91,7 @@ fs.writeFileSync(filePath, replacedCode);
         |  basedir | _{string}_ set this value, you can use relative path in `.fromDir(path)`
         | resolve | _{function(id)}_, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`, you may also use Node API `require.resolve` or [browserResolve](https://www.npmjs.com/package/browser-resolve)`.sync`
         | resolveOpts | _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
-		| debug | if true, log4js will be enabled to print out logs
+		|  debug | if true, log4js will be enabled to print out logs
 
 
 - #### .fromPackage( _{string|array}_ nodePackageName, _{function}_ resolve, _{object}_ opts)<a name="api2"></a>
