@@ -5,6 +5,7 @@ var estraverse = require('estraverse');
 var _ = require('lodash');
 var through = require('through2');
 var Injector = require('./node-inject');
+var log = require('log4js').getLogger('require-injector.replace-require');
 
 module.exports = ReplaceRequire;
 module.exports.replace = replace;
@@ -50,30 +51,57 @@ ReplaceRequire.prototype = _.create(Injector.prototype, {
 	 * @return {string}          replaced source code, if there is no injectable `require()`, same source code will be returned.
 	 */
 	injectToFile: function(filePath, code, ast) {
-		var dir = this.quickSearchDirByFile(filePath);
-		if (dir) {
-			var factoryMap = this.injectionScopeMap[dir];
-			var replacement = {};
-			_.each(factoryMap.requireMap, function(injector, name) {
-				if (_.has(injector, 'factory')) {
-					replacement[name] = '(' + injector.factory.toString() + ')()';
-				} else if (_.has(injector, 'substitute')) {
-					replacement[name] = 'require(\'' + injector.substitute + '\')';
-				} else if (_.has(injector, 'value')) {
-					if (_.has(injector.value, 'replacement')) {
-						replacement[name] = injector.value.replacement;
-					} else {
-						replacement[name] = JSON.stringify(injector.value);
+		var factoryMap;
+		try {
+			var dir = this.quickSearchDirByFile(filePath);
+
+			if (dir) {
+				factoryMap = this.injectionScopeMap[dir];
+				var replacement = {};
+
+				_.each(factoryMap.requireMap, function(injector, name) {
+					if (_.has(injector, 'factory')) {
+						defineLazyProp(replacement, name, function() {
+							return '(' + injector.factory.toString() + ')()';
+						});
+					} else if (_.has(injector, 'substitute')) {
+						defineLazyProp(replacement, name, function() {
+							return 'require(\'' + injector.substitute + '\')';
+						});
+					} else if (_.has(injector, 'value')) {
+						if (_.has(injector.value, 'replacement')) {
+							defineLazyProp(replacement, name, function() {
+								return injector.value.replacement;
+							});
+						} else {
+							defineLazyProp(replacement, name, function() {
+								return JSON.stringify(injector.value);
+							});
+						}
+					} else if (_.has(injector, 'variable')) {
+						defineLazyProp(replacement, name, function() {
+							return injector.variable;
+						});
 					}
-				} else if (_.has(injector, 'variable')) {
-					replacement[name] = injector.variable;
-				}
-			});
-			return replace(code, replacement, ast);
+				});
+				return replace(code, replacement, ast);
+			}
+			return code;
+		} catch (e) {
+			log.error('filePath: ' + filePath);
+			log.error(factoryMap.requireMap);
+			log.error(e.stack);
+			throw e;
 		}
-		return code;
 	}
 });
+
+function defineLazyProp(obj, name, get) {
+	Object.defineProperty(obj, name, {
+		enumerable: true,
+		get: get
+	});
+}
 
 function replace(code, replacement, ast) {
 	if (!ast) {

@@ -3,7 +3,7 @@ var _ = require('lodash');
 var resolve = require('resolve').sync;
 var mothership = require('mothership').sync;
 var Path = require('path');
-var log = require('log4js').getLogger('require-injector.register-node');
+var log = require('log4js').getLogger('require-injector.node-inject');
 
 module.exports = Injector;
 
