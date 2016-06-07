@@ -68,7 +68,7 @@ rj.fromPackage('...')
 ...
 var browserify = require('browserify');
 var b = browserify();
-b.transform(rj.transform);
+b.transform(rj.transform, {global: true});
 ```
 It uses [esprima](https://www.npmjs.com/package/esprima) language recoganizer to parse each JS file and replace line of `require("matchedModule")`.
 
@@ -83,7 +83,7 @@ fs.writeFileSync(filePath, replacedCode);
 ### Solution for NodeJS and browser environment
 - For NodeJS, the injector kidnaps Node's native API `Module.prototype.require()`, so that each `require()` call goes to injector's control, it returns injecting value according to callee file's id (file path).
 
-- For browsers, if you are packing your code by any tool like Browsersify and Webpack, this module plays a role of `tranform` or `replacer`, parsing JS code and replacing `require()` expression whith stringified injecting value.
+- For browsers, if you are packing your code by any tool like Browsersify and Webpack, this module plays a role of `tranform` or `replacer`, parsing JS code and replacing `require()` expression with stringified injecting value.
 
 ### Injector API
 - #### require('require-injector')( _{object}_ opts )<a name="api1"></a>
@@ -127,6 +127,25 @@ fs.writeFileSync(filePath, replacedCode);
 		```
 
 	_returns_ chainable FactoryMap
+
+- #### transform(filePath)<a name="api8"></a>
+    A Browserify JS file transform function to replace `require()` expression with proper injection.
+	```js
+	// add to Browserify as a transform
+	browserify.transform(rj.transform, {global: true});
+	```
+	_returns_ transform stream
+
+- #### injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)<a name="api7"></a>
+	Here "inject" is actually "replacement".
+	Parsing a matched file to Esprima AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.
+	##### Parameters
+	- `filePath`: file path
+	- `code`: content of file
+	- `ast`: optional, if you have already parsed code to[esrima](https://www.npmjs.com/package/esprima) AST tree with `{range: true}` option, pass it to this function which helps to speed up process by ski parsing code one more time.
+
+- #### cleanup()<a name="api9"></a>
+    Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
 ### FactoryMap API
 - #### substitute(_{string}_ requiredModule, _{string}_ newModule)<a name="api4"></a>
 	Replacing a required module with requiring another module.
@@ -169,22 +188,6 @@ fs.writeFileSync(filePath, replacedCode);
 		})
 		```
 	_returns_ chainable FactoryMap
-
-- #### injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)<a name="api7"></a>
-    Here "inject" is actually "replacement".
-    Parsing a matched file to esprima AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.
-    ##### Parameters
-    - `filePath`: file path
-    - `code`: content of file
-    - `ast`: optional, if you have already parsed code to [esprima](https://www.npmjs.com/package/esprima) AST tree, pass it to this function which helps to speed up process by skip parsing code one more time.
-
-	_returns_ chainable FactoryMap
-
-- #### transform(filePath)<a name="api8"></a>
-    A Browserify JS file transform function to replace `require()` expression with proper injection.
-
-- #### cleanup()<a name="api9"></a>
-    Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
 
 -----
 Now you can require some cool fake or abstract module name in your code, and inject/replace them with the real package or value.
