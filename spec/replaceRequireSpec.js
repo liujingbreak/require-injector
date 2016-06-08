@@ -21,6 +21,15 @@ describe('replace-require', ()=> {
 
 			expect(result).toBe(';b;;var s = require("b");');
 		});
+
+		it('should work for sample3', function() {
+			var result = rr('require("hellow");obj.require("a");', {
+				hellow: '',
+				a: 'b'
+			});
+
+			expect(result).toBe(';obj.require("a");');
+		});
 	});
 
 	describe('injectToFile()', ()=> {
