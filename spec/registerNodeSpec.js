@@ -4,17 +4,6 @@ var bresolve = require('browser-resolve').sync;
 var fs = require('fs');
 
 describe('register-node', () => {
-	beforeEach(() => {
-		rj.cleanup();
-		delete require.cache[require.resolve('module1')];
-		delete require.cache[require.resolve('module2')];
-		delete require.cache[require.resolve('module3')];
-		delete require.cache[require.resolve('./dir1/test.js')];
-		delete require.cache[require.resolve('./dir2/test.js')];
-		delete require.cache[require.resolve('./dir2/dir3')];
-		delete require.cache[require.resolve('./dir2/dir3/dir4')];
-	});
-
 	describe('for single package and dir', () => {
 		beforeEach(()=> {
 			rj({
@@ -23,10 +12,7 @@ describe('register-node', () => {
 					basedir: __dirname
 				},
 				debug: true
-			})
-				.fromPackage('module2', {
-					basedir: __dirname
-				})
+			}).fromPackage('module2')
 				.factory('@a/aaa', function() {
 					return 'a';
 				})
@@ -53,6 +39,17 @@ describe('register-node', () => {
 
 			rj.fromDir('spec/a');
 			rj.fromPackage('module2');
+		});
+
+		afterEach(() => {
+			rj.cleanup();
+			delete require.cache[require.resolve('module1')];
+			delete require.cache[require.resolve('module2')];
+			delete require.cache[require.resolve('module3')];
+			delete require.cache[require.resolve('./dir1/test.js')];
+			delete require.cache[require.resolve('./dir2/test.js')];
+			delete require.cache[require.resolve('./dir2/dir3')];
+			delete require.cache[require.resolve('./dir2/dir3/dir4')];
 		});
 
 		it('.sortedPackagePathList should contains configured packages and', ()=> {
@@ -133,6 +130,17 @@ describe('register-node', () => {
 	});
 
 	describe('when target file is from mutiple packages or directories', ()=> {
+		afterEach(() => {
+			rj.cleanup();
+			delete require.cache[require.resolve('module1')];
+			delete require.cache[require.resolve('module2')];
+			delete require.cache[require.resolve('module3')];
+			delete require.cache[require.resolve('./dir1/test.js')];
+			delete require.cache[require.resolve('./dir2/test.js')];
+			delete require.cache[require.resolve('./dir2/dir3')];
+			delete require.cache[require.resolve('./dir2/dir3/dir4')];
+		});
+		
 		it('.fromPackage() should work with array of package names', ()=> {
 			rj({
 				basedir: Path.resolve(__dirname, '..'),

@@ -2,27 +2,30 @@
 ![https://travis-ci.org/](https://travis-ci.org/dr-web-house/require-injector.svg)
 [Travis build](https://travis-ci.org/dr-web-house/require-injector)
 
-Injecting and replacing require() function in both NodeJS and browser side CommonJS framework like Browserify and Webpack.
+Injecting and replacing require() function in both NodeJS and browser side CommonJS packing tool like Browserify.
 
 > You may use it as a simple IoC container, which helps you decouple modules.
 
 > Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
+
+Updates:
+ - v0.3.2 Browser command line transform is added.
 
 ### Installation
 ```
 npm install require-injector
 ```
 
-### Setup
+### Example
 
 Assume you have project structure like below,
 ```
 /
 ├─── src
 |    ├─── dir1
-|    |     └─── some1.js
+|    |     └─── feature1.js
 |    └─── dir2
-|          └─── some2.js
+|          └─── feature2.js
 ├─── app.js
 └─── node_modules
       ├─── module1/index.js, package.json, ...
@@ -54,16 +57,16 @@ You can setup injection for JS file of specific packages, e.g. module1
 ```js
 ...
 rj.fromPackage('module1')
-	.substitute('module1-dependencyA', 'someOtherPackage');
+	.substitute('module1-dependencyA', 'anotherPackage');
 // If module1 is a Browserify package
 rj.fromPackage('module1', require('browser-resolve').sync)
-    .substitute('module1-dependencyA', 'someOtherPackage');
+    .substitute('module1-dependencyA', 'anotherPackage');
 ```
-
+### Browserify example
 If you are packing files to browser side by Browserify,
 ```js
 var bresolve = require('browser-resolve').sync;
-rj({resolve: bresolve});
+rj({resolve: bresolve, noNode: true});
 rj.fromPackage('...')
 ...
 var browserify = require('browserify');
@@ -71,7 +74,29 @@ var b = browserify();
 b.transform(rj.transform, {global: true});
 ```
 It uses [esprima](https://www.npmjs.com/package/esprima) language recoganizer to parse each JS file and replace line of `require("matchedModule")`.
+Set `noNode` to `true` to disable injection on NodeJS modules, only work as a replacer.
 
+Browserify from command line
+```shell
+browserify entry.js --global-transform
+ [ require-injector/transform --inject inject.js ]
+```
+`inject.js` is where you initialize require-injector settings
+```js
+var rj = require('require-injector');
+rj({noNode: true});
+
+rj.fromDir('folderA')
+	.value('moduleX', 'hellow')
+	.factory('moduleY', function() {return something;})
+	.substitute('moduleZ', 'moduleA');
+
+rj.fromPackage('moduleB')
+...
+```
+
+
+### Replacement
 Or you just want to write your own replacement function for Browserify and Webpack, just call `.injectToFile`,
 ```js
 var fs = require('fs');
@@ -91,10 +116,12 @@ fs.writeFileSync(filePath, replacedCode);
 	It kidnaps Node's native API `Module.prototype.require()`, so every `require()`
 	call actually goes to its management.
     ##### Parameters
-	`opts`: optional, global option:
-	- `opts.basedir`: _{string}_ set this value, youcan use relative path in `.fromDir(path)`
-	- `opts.resolve`: _{function(id)}_, default is[reolve](https://www.npmjs.com/package/resolve)`.sync`, youmay also use Node API `require.resolve` or [browser-resolve](https://www.npmjs.com/package/browser-resole)`.sync`
+	`opts`: optional, global options:
+
+	- `opts.basedir`: _{string}_ default is process.cwd(), used to resolve relative path in `.fromDir(path)`
+	- `opts.resolve`: _{function(id)}_, default is[reolve](https://www.npmjs.com/package/resolve)`.sync`, you may also use Node API `require.resolve` or [browser-resolve](https://www.npmjs.com/package/browser-resole)`.sync`
 	- `opts.resolveOpts`:  _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
+    - `noNode`: _{boolean}_  default is false, if you only use it as a replacer like Browserify's transform or Webpack's loader, you don't want injection work on NodeJS side, no kidnapping on `Module.prototype.require`, just set this property to `true`
 	- `opts.debug`: _{boolean}_ if true, log4js will be enabled to print out logs
 
 
@@ -134,7 +161,7 @@ fs.writeFileSync(filePath, replacedCode);
 	// add to Browserify as a transform
 	browserify.transform(rj.transform, {global: true});
 	```
-	_returns_ transform stream
+	_returns_ through-stream
 
 - #### injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)<a name="api7"></a>
 	Here "inject" is actually "replacement".
@@ -161,7 +188,7 @@ fs.writeFileSync(filePath, replacedCode);
     Replacing a required module with a function returned value.
     ##### Parameters
     - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
-    - `factory`: A function that returns a value which then will be replaced to the original module of `requireMaodule`.
+    - `factory`: A function that returns a value which then will be replaced to the original module of `requiredModule`.
 
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
 		```js
@@ -195,4 +222,6 @@ fs.writeFileSync(filePath, replacedCode);
 -----
 Now you can require some cool fake or abstract module name in your code, and inject/replace them with the real package or value.
 
-Most of the functions in the package have been covered by unit test, except Browserify `.tranform` function, contribution is welcome.
+All have been covered by unit test, except Browserify `.tranform` function, contribution is welcome.
+
+I will continue to work on Webpack loaders
