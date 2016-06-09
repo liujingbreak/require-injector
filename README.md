@@ -65,8 +65,7 @@ rj.fromPackage('module1', require('browser-resolve').sync)
 ### Browserify example
 If you are packing files to browser side by Browserify,
 ```js
-var bresolve = require('browser-resolve').sync;
-rj({resolve: bresolve, noNode: true});
+rj({noNode: true});
 rj.fromPackage('...')
 ...
 var browserify = require('browserify');
@@ -121,7 +120,7 @@ fs.writeFileSync(filePath, replacedCode);
 	- `opts.basedir`: _{string}_ default is process.cwd(), used to resolve relative path in `.fromDir(path)`
 	- `opts.resolve`: _{function(id)}_, default is[reolve](https://www.npmjs.com/package/resolve)`.sync`, you may also use Node API `require.resolve` or [browser-resolve](https://www.npmjs.com/package/browser-resole)`.sync`
 	- `opts.resolveOpts`:  _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
-    - `noNode`: _{boolean}_  default is false, if you only use it as a replacer like Browserify's transform or Webpack's loader, you don't want injection work on NodeJS side, no kidnapping on `Module.prototype.require`, just set this property to `true`
+    - `noNode`: _{boolean}_  default is false, if you only use it as a replacer like Browserify's transform or Webpack's loader, you don't want injection work on NodeJS side, no kidnapping on `Module.prototype.require`, just set this property to `true`. And this will turn default `opts.resolve` to `require('browser-resolve').sync`.
 	- `opts.debug`: _{boolean}_ if true, log4js will be enabled to print out logs
 
 
@@ -131,7 +130,7 @@ fs.writeFileSync(filePath, replacedCode);
 	- `nodePackageName`: Node package's name or array of multiple package names
     - `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
 
-        If the package is a Browserify package, you may use [browser-resolve](https://www.npmjs.com/package/browser-resolve)`.sync` or `require.resolve`
+        If the package is a Browserify package, you may use [browser-resolve](https://www.npmjs.com/package/browser-resolve)`.sync`. Or you turn on global option `{noNode: true}`, then it will by default use browser-resolve.sync.
 	- `opts`: optional, options object passed to [resolve](https://www.npmjs.com/package/resolve),
 
 	Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve).
