@@ -140,7 +140,7 @@ describe('register-node', () => {
 			delete require.cache[require.resolve('./dir2/dir3')];
 			delete require.cache[require.resolve('./dir2/dir3/dir4')];
 		});
-		
+
 		it('.fromPackage() should work with array of package names', ()=> {
 			rj({
 				basedir: Path.resolve(__dirname, '..'),

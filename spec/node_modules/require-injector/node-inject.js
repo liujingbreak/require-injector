@@ -245,8 +245,7 @@ FactoryMapCollection.prototype = {
 	}
 };
 
-var packageNamePattern = /^[^\.\/\\][^:]+/;
-
+// var packageNamePattern = /^[^\.\/\\][^:]+/;
 
 /**
  * Return -1, if file does not belong to any of directories `folders`

@@ -8,9 +8,6 @@ Injecting and replacing require() function in both NodeJS and browser side Commo
 
 > Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
 
-Updates:
- - v0.3.2 Browser command line transform is added.
-
 ### Installation
 ```
 npm install require-injector
@@ -219,8 +216,8 @@ fs.writeFileSync(filePath, replacedCode);
 
 
 -----
-Now you can require some cool fake or abstract module name in your code, and inject/replace them with the real package or value.
+Now you can require some cool fake module name in your code, and inject/replace them with the real package or value later.
 
-All have been covered by unit test, except Browserify `.tranform` function, contribution is welcome.
+All have been covered by tests.
 
-I will continue to work on Webpack loaders
+Anyone willing to contribute for Webpack loader will be very welcome.
