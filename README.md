@@ -32,7 +32,6 @@ Assume you have project structure like below,
 In src/dir1/some1.js, there is `require()` calling to `module1`
 ```js
 var m1 = require('module1');
-var m2 = require('nonexitent');
 ```
 You can inject this `require('module1')` with the exports value from `module2`.
 
@@ -42,11 +41,11 @@ var rj = require('require-injector');
 
 rj({basedir: __dirname});
 rj.fromDir('src/dir1')
-	.substitute('module1', 'module2');
+	.substitute('module1', 'anotherPackage');
 ```
 Also you can inject it with a value returned from some factory function, or just give a value to it;
 ```js
-rj.fromDir('src/dir1')
+rj.fromDir(['src/dir1', 'src/dir2'])
 	.factory('module1', function(file) { return something;})
 	.value('module2', 123);
 ```
@@ -83,12 +82,12 @@ var rj = require('require-injector');
 rj({noNode: true});
 
 rj.fromDir('folderA')
-	.value('moduleX', 'hellow')
+	.value('moduleX', 'anotherPackage')
 	.factory('moduleY', function() {return something;})
-	.substitute('moduleZ', 'moduleA');
+	.substitute('moduleZ', 'anotherPackage');
 
 rj.fromPackage('moduleB')
-...
+	...
 ```
 
 
@@ -104,7 +103,21 @@ fs.writeFileSync(filePath, replacedCode);
 ### Solution for NodeJS and browser environment
 - For NodeJS, the injector kidnaps Node's native API `Module.prototype.require()`, so that each `require()` call goes to injector's control, it returns injecting value according to callee file's id (file path).
 
-- For browsers, if you are packing your code by any tool like Browsersify and Webpack, this module plays a role of `tranform` or `replacer`, parsing JS code and replacing `require()` expression with stringified injecting value.
+- For browsers, if you are packing your code by any tool like Browsersify and Webpack, this module plays a role of `tranform`, `loader` or `replacer`, parsing JS code and replacing `require()` expression with stringified injecting value.
+
+You can even create 2 instances, one for Node injection, another for browser side replacement, so they don't interfere each other.
+```js
+// Node injection
+var rj = require('require-injector');
+var rjNode = rj();
+rjNode.fromPackage('feature1')
+	.substitute('dependency1', 'module1');
+
+var rjReplace = rj({noNode: true});
+rjReplace.fromPackage('feature2')
+	.factory('dependency2', 'module2');
+
+```
 
 ### Injector API
 - #### require('require-injector')( _{object}_ opts )<a name="api1"></a>
@@ -175,7 +188,9 @@ fs.writeFileSync(filePath, replacedCode);
 - #### substitute(_{string}_ requiredModule, _{string}_ newModule)<a name="api4"></a>
 	Replacing a required module with requiring another module.
 	##### Parameters
-	- `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
+	- `requiredModule`: the original module name which is required for, it can't be relative file path, only supports absolute path, a package name or scoped package name.
+        > Package name like `lodash/throttle` also works, as long as it can be resolved to same absolute path all the time.
+
 	- `newModule`: the new module name that is replaced with.
 
 	_returns_ chainable FactoryMap
@@ -183,7 +198,7 @@ fs.writeFileSync(filePath, replacedCode);
 - #### factory(_{string}_ requiredModule, _{function}_ factory)<a name="api5"></a>
     Replacing a required module with a function returned value.
     ##### Parameters
-    - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
+    - `requiredModule`: the original module name which is required for, it can't be a relative file path.
     - `factory`: A function that returns a value which then will be replaced to the original module of `requiredModule`.
 
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
@@ -196,7 +211,7 @@ fs.writeFileSync(filePath, replacedCode);
 - #### value(_{string}_ requiredModule, _{*|object}_ value)<a name="api6"></a>
     Replacing a required module with any object or primitive value.
     ##### Parameters
-    - `requiredModule`: the original module name which is required for, it can't be a relative file path, only supports package name or scoped package name.
+    - `requiredModule`: the original module name which is required for, it can't be a relative file path.
     - `value`: the value be replaced to `requiredModule` exports.
 
         When `.injectToFile()` is called or `.transform` is used for Browserify, meaning it is not a Node environment, the solution is actually replacing entire `require('requiredModule')` expression with result of `JSON.stringify(value)`.
