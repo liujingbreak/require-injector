@@ -113,21 +113,23 @@ Injector.prototype = {
 
 	/**
 	 * Recursively build sortedDirs, subDirMap
-	 * @param  {[type]} path [description]
-	 * @param  {[type]} dirs [description]
+	 * @param  {string} path new directory
+	 * @param  {Array<string>} dirs [description]
 	 * @return {[type]}      [description]
 	 */
 	_fromDir: function(path, dirs) {
 		if (Path.sep === '\\') {
 			path = path.replace(/\\/g, '/');
 		}
+		if (!_.endsWith(path, '/'))
+			path += '/';
 		var idx = _.sortedIndex(dirs, path);
 		if (dirs[idx] !== path) {
-			if (idx > 0 && _.startsWith(path, dirs[idx - 1] + '/')) {
+			if (idx > 0 && _.startsWith(path, dirs[idx - 1])) {
 				// path is sub directory of dirs[idx-1]
 				var parentDir = dirs[idx - 1];
 				throw new Error('Overlap directory setting with ' + parentDir);
-			} else if (dirs[idx] && _.startsWith(dirs[idx], path + '/')) {
+			} else if (dirs[idx] && _.startsWith(dirs[idx], path)) {
 				// path is parent dir of dirs[idx]
 				throw new Error('Overlap directory setting with ' + dirs[idx]);
 			}
@@ -250,10 +252,11 @@ var packageNamePattern = /^[^\.\/\\][^:]+/;
  */
 function findDirIndexOfFile(file, folders) {
 	var idx = _.sortedIndex(folders, file);
+	log.warn(file + ' idx = ' + idx);
 	if (idx === 0) {
 		return -1;
 	}
-	if (!_.startsWith(file, folders[idx - 1] + '/')) {
+	if (!_.startsWith(file, folders[idx - 1])) {
 		// file is not under any of folders
 		return -1;
 	}

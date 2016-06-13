@@ -23,6 +23,11 @@ describe('register-node', () => {
 					return 'a';
 				})
 				.substitute('bbb', 'module3');
+			rj.fromDir('spec/dir1_2')
+				.factory('aaa', function() {
+					return 'a';
+				})
+				.substitute('bbb', 'module3');
 
 			rj.fromDir('spec/dir2')
 				.factory('@a/aaa', function() {
@@ -57,9 +62,9 @@ describe('register-node', () => {
 				return path.substring(__dirname.length + 1);
 			});
 			expect(folders).toEqual([
-				'a', 'dir1', 'dir2',
-				'node_modules/module1',
-				'node_modules/module2'
+				'a/', 'dir1/', 'dir1_2/', 'dir2/',
+				'node_modules/module1/',
+				'node_modules/module2/'
 			]);
 		});
 
@@ -73,7 +78,6 @@ describe('register-node', () => {
 			foundDir = rj.testable().quickSearchDirByFile(Path.resolve(__dirname, 'node_modules/abc'));
 			expect(foundDir).toBe(null);
 		});
-
 
 		it('require() call in replacing module 1 & 2 should have been injected with module3\'s exports', ()=> {
 			expect(require('module1')).toBe('module1 exports-module3');
@@ -140,7 +144,7 @@ describe('register-node', () => {
 			delete require.cache[require.resolve('./dir2/dir3')];
 			delete require.cache[require.resolve('./dir2/dir3/dir4')];
 		});
-		
+
 		it('.fromPackage() should work with array of package names', ()=> {
 			rj({
 				basedir: Path.resolve(__dirname, '..'),
@@ -179,6 +183,65 @@ describe('register-node', () => {
 			expect(require('./dir1/test.js')).toBe('dir1 xxxxxx');
 			expect(require('./dir2/test.js')).toBe('dir2 xxxxxxxxx');
 			rj.cleanup();
+		});
+	});
+
+	describe('bug should be fixed for ', ()=> {
+		afterEach(() => {
+			rj.cleanup();
+			delete require.cache[require.resolve('module1')];
+			delete require.cache[require.resolve('module2')];
+			delete require.cache[require.resolve('module3')];
+			delete require.cache[require.resolve('./dir1/test.js')];
+			delete require.cache[require.resolve('./dir2/test.js')];
+			delete require.cache[require.resolve('./dir2/dir3')];
+			delete require.cache[require.resolve('./dir2/dir3/dir4')];
+		});
+
+		it('.quickSearchDirByFile() should work for similar directory names like dir1 and dir12', () => {
+			rj({
+				basedir: Path.resolve(__dirname, '..'),
+				resolveOpts: {
+					basedir: __dirname
+				},
+				debug: true
+			}).fromPackage('module2')
+				.factory('@a/aaa', function() {
+					return 'a';
+				})
+				.substitute('@b/bbb', 'module3');
+
+			rj.fromPackage('module1')
+				.factory('aaa', function() {
+					return 'a';
+				})
+				.substitute('bbb', 'module3');
+
+			rj.fromDir('spec/dir2')
+				.factory('@a/aaa', function() {
+					return 'a';
+				})
+				.substitute('@b/bbb', 'module3')
+				.value('@c/ccc', 'c');
+
+			rj.fromDir('spec/dir1_2')
+				.factory('aaa', function() {
+					return 'a';
+				})
+				.substitute('bbb', 'module3');
+			rj.fromDir('spec/dir1_')
+					.substitute('bbb', 'module3');
+			rj.fromDir('spec/dir1')
+				.factory('aaa', function() {
+					return 'a';
+				})
+				.substitute('bbb', 'module3');
+
+			rj.fromDir('spec/a');
+			rj.fromPackage('module2');
+			var foundDir = rj.testable().quickSearchDirByFile(Path.resolve(__dirname, 'dir1_2/test12.js'));
+			console.log(rj.testable().sortedDirs);
+			expect(foundDir).toBe(Path.resolve(__dirname, 'dir1_2') + '/');
 		});
 	});
 });
