@@ -23,14 +23,17 @@ function Injector(opts) {
 	this.sortedDirs = [];
 	this.injectionScopeMap = {};
 	this.oldRequire = Module.prototype.require;
+	this.config = opts ? opts : {};
+
 	var self = this;
 	if (!_.get(opts, 'noNode')) {
 		Module.prototype.require = function(path) {
 			return self.replacingRequire(this, path);
 		};
+	} else {
+		this.config.resolve = this.config.resolve ? this.config.resolve : require('browser-resolve').sync;
 	}
 
-	this.config = opts ? opts : {};
 	if (!Injector.defaultInstance) {
 		Injector.defaultInstance = this;
 	}
@@ -172,11 +175,12 @@ Injector.prototype = {
 	},
 
 	replacingRequire: function(calleeModule, path) {
-		if (packageNamePattern.test(path)) {
-			return this.inject(calleeModule, path);
-		} else {
-			return this.oldRequire.call(calleeModule, path);
-		}
+		return this.inject(calleeModule, path);
+		// if (packageNamePattern.test(path)) {
+		// 	return this.inject(calleeModule, path);
+		// } else {
+		// 	return this.oldRequire.call(calleeModule, path);
+		// }
 	},
 
 	quickSearchDirByFile: function(file) {
@@ -243,8 +247,7 @@ FactoryMapCollection.prototype = {
 	}
 };
 
-var packageNamePattern = /^[^\.\/\\][^:]+/;
-
+// var packageNamePattern = /^[^\.\/\\][^:]+/;
 
 /**
  * Return -1, if file does not belong to any of directories `folders`
