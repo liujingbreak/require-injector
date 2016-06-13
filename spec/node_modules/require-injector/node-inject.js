@@ -255,7 +255,6 @@ FactoryMapCollection.prototype = {
  */
 function findDirIndexOfFile(file, folders) {
 	var idx = _.sortedIndex(folders, file);
-	log.warn(file + ' idx = ' + idx);
 	if (idx === 0) {
 		return -1;
 	}
