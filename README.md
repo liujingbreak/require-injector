@@ -4,6 +4,7 @@
 
 Injecting and replacing require() function in both NodeJS and browser side CommonJS packing tool like Browserify.
 
+When it is used for Node, it is a little bit like [app-module-path](https://www.npmjs.com/package/app-module-path)
 > You may use it as a simple IoC container, which helps you decouple modules.
 
 > Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
@@ -20,15 +21,20 @@ Assume you have project structure like below,
 /
 ├─── src
 |    ├─── dir1
+|    |     ├─── sub-dir
+|    |     |      └─── feature1-1.js
 |    |     └─── feature1.js
 |    └─── dir2
 |          └─── feature2.js
 ├─── app.js
+├─── utils
+|      └─── index.js
 └─── node_modules
       ├─── module1/index.js, package.json, ...
       └─── module2/index.js, package.json, ...
 ```
 
+#### Injection for local files
 In src/dir1/some1.js, there is `require()` calling to `module1`
 ```js
 var m1 = require('module1');
@@ -41,14 +47,39 @@ var rj = require('require-injector');
 
 rj({basedir: __dirname});
 rj.fromDir('src/dir1')
-	.substitute('module1', 'anotherPackage');
+	.substitute('module1', 'module2');
 ```
-Also you can inject it with a value returned from some factory function, or just give a value to it;
+From then on, any file `require('module1')` will actually be requiring module2 instead.
+
+Also you can inject it with a value returned from a lazy factory function, or just give a value to it;
 ```js
 rj.fromDir(['src/dir1', 'src/dir2'])
 	.factory('module1', function(file) { return something;})
 	.value('module2', 123);
 ```
+#### No relative path needed in require()
+You may don't need require messy relative path anymore. Image you have a common `utils` always be required by different feature folders. Same effect like [app-module-path](https://www.npmjs.com/package/app-module-path)
+```js
+// In app.js
+var rj = require('require-injector');
+rj({basedir: __dirname});
+rj.fromDir(['src/dir1', 'src/dir2']).factory('_utils', function() {
+	return require('./utils');
+});
+```
+Now you have a common fake module name called `_utils` to be required from dir1,dir2
+In dir1/feature1.js
+```js
+// var utils = require('../utils');
+var utils = require('_utils');
+```
+In dir1/sub-dir/feature1-1.js
+```js
+// var utils = require('../../utils');
+var utils = require('_utils');
+```
+
+#### Injection for Node packages
 You can setup injection for JS file of specific packages, e.g. module1
 ```js
 ...
@@ -58,6 +89,10 @@ rj.fromPackage('module1')
 rj.fromPackage('module1', require('browser-resolve').sync)
     .substitute('module1-dependencyA', 'anotherPackage');
 ```
+
+
+
+
 ### Browserify example
 If you are packing files to browser side by Browserify,
 ```js
@@ -90,9 +125,29 @@ rj.fromPackage('moduleB')
 	...
 ```
 
+### Webpack-like split loading module replacement: `require.ensure()`
+`.substitute()` works for call expression like `require.ensure()`\
+Injection setup in gulp script for Webpack like below,
+```js
+rj({noNode: true, basedir: __dirname});
+rj.fromDir('dir1').substitute('replaceMe', 'module1');
+```
+In browser side file
+```js
+require.ensure(['replaceMe', 'module2'], function() {
+	....
+})
+```
+will be replaced to
+```js
+require.ensure(['module1', 'module2'], function() {
+	....
+})
+```
+> Webpack loader is still in progress, but if you have your own loader, this feature will be handy for you to write your own replacement function.
 
 ### Replacement
-Or you just want to write your own replacement function for Browserify and Webpack, just call `.injectToFile`,
+You can write your own replacement function for Browserify or Webpack, just call `.injectToFile()`,
 ```js
 var fs = require('fs');
 var code = fs.readFileSync(filePath, 'utf8');
@@ -197,6 +252,8 @@ rjReplace.fromPackage('feature2')
 
 - #### factory(_{string}_ requiredModule, _{function}_ factory)<a name="api5"></a>
     Replacing a required module with a function returned value.
+	> Not work for `require.ensure()`
+
     ##### Parameters
     - `requiredModule`: the original module name which is required for, it can't be a relative file path.
     - `factory`: A function that returns a value which then will be replaced to the original module of `requiredModule`.
@@ -210,6 +267,8 @@ rjReplace.fromPackage('feature2')
 
 - #### value(_{string}_ requiredModule, _{*|object}_ value)<a name="api6"></a>
     Replacing a required module with any object or primitive value.
+	> Not work for `require.ensure()`
+
     ##### Parameters
     - `requiredModule`: the original module name which is required for, it can't be a relative file path.
     - `value`: the value be replaced to `requiredModule` exports.

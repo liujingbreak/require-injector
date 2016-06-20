@@ -2,12 +2,13 @@ var rr = require('..').replace;
 var rj = require('..');
 var Path = require('path');
 var fs = require('fs');
+var _ = require('lodash');
 
 describe('replace-require', ()=> {
 	describe('replace', ()=> {
 		it('should work for sample1', function() {
 			var result = rr('require("hellow");', {
-				hellow: '__'
+				hellow: {rq: '__'}
 			});
 
 			expect(result).toBe('__;');
@@ -30,9 +31,17 @@ describe('replace-require', ()=> {
 
 			expect(result).toBe(';obj.require("a");');
 		});
+
+		it('should work for require.ensure sample 1', function() {
+			var result = rr('require.ensure(["A", "B"], function() {});', {
+				A: {rs: 'x'},
+				B: {rs: 'y'}
+			});
+			expect(result).toBe('require.ensure([x, y], function() {});');
+		});
 	});
 
-	describe('injectToFile()', ()=> {
+	describe('injectToFile() for require() ', ()=> {
 		beforeAll(()=>{
 			rj.cleanup();
 
@@ -78,6 +87,21 @@ describe('replace-require', ()=> {
 				.factory('hellow', function() {return 1;});
 			var result = rj.injectToFile(Path.resolve('test/efg.js'), 'require("hellow");');
 			expect(eval(result)).toBe(1);
+		});
+	});
+
+	describe('injectToFile() for require.ensure() ', ()=> {
+		beforeAll(()=>{
+			rj.cleanup();
+			rj({basedir: __dirname});
+			rj.fromDir(['dir1', 'dir2'])
+				.substitute('A', 'aaa')
+				.value('B', 'shouldnotBeReplaced');
+		});
+		it('.substitute() should work', function() {
+			var result = rj.injectToFile(Path.resolve(__dirname, 'dir1/testRequireEnsure.js'),
+				fs.readFileSync(Path.resolve(__dirname, 'dir1/testRequireEnsure.js'), 'utf8'));
+			expect(_.trim(result)).toBe('require.ensure([\'aaa\', "B"], function() {})');
 		});
 	});
 });

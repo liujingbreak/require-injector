@@ -56,25 +56,30 @@ ReplaceRequire.prototype = _.create(Injector.prototype, {
 				_.each(factoryMap.requireMap, function(injector, name) {
 					if (_.has(injector, 'factory')) {
 						defineLazyProp(replacement, name, function() {
-							return '(' + injector.factory.toString() + ')()';
+							return {
+								rq: '(' + injector.factory.toString() + ')()'
+							};
 						});
 					} else if (_.has(injector, 'substitute')) {
 						defineLazyProp(replacement, name, function() {
-							return 'require(\'' + injector.substitute + '\')';
+							return {
+								rs: '\'' + injector.substitute + '\'',
+								rq: 'require(\'' + injector.substitute + '\')'
+							};
 						});
 					} else if (_.has(injector, 'value')) {
 						if (_.has(injector.value, 'replacement')) {
 							defineLazyProp(replacement, name, function() {
-								return injector.value.replacement;
+								return {rq: injector.value.replacement};
 							});
 						} else {
 							defineLazyProp(replacement, name, function() {
-								return JSON.stringify(injector.value);
+								return {rq: JSON.stringify(injector.value)};
 							});
 						}
 					} else if (_.has(injector, 'variable')) {
 						defineLazyProp(replacement, name, function() {
-							return injector.variable;
+							return {rq: injector.variable};
 						});
 					}
 				});
@@ -105,18 +110,16 @@ function replace(code, replacement, ast) {
 	var patches = [];
 	estraverse.traverse(ast, {
 		enter: function(node, parent) {
-			if (node.type === 'CallExpression' &&
-			_.get(node, 'callee.type') === 'Identifier' &&
-			_.get(node, 'callee.name') === 'require') {
-				var required = _.get(node, 'arguments[0].value');
-				if (_.has(replacement, required)) {
-					var replaced = replacement[required];
-					//console.log('replace require (' + required + ') to ' + replaced);
-					patches.push({
-						start: node.range[0],
-						end: node.range[1],
-						replacement: replaced
-					});
+			if (node.type === 'CallExpression') {
+				var calleeType = _.get(node, 'callee.type');
+				if (calleeType === 'Identifier' && _.get(node, 'callee.name') === 'require') {
+					onRequire(node, replacement, patches);
+				} else if (calleeType === 'MemberExpression' &&
+					node.callee.object.name === 'require' &&
+					node.callee.object.type === 'Identifier' &&
+					node.callee.property.name === 'ensure' &&
+					node.callee.property.type === 'Identifier') {
+					onRequireEnsure(node, replacement, patches);
 				}
 			}
 		},
@@ -124,6 +127,54 @@ function replace(code, replacement, ast) {
 		}
 	});
 	return patchText(code, patches);
+}
+
+function onRequire(node, replacement, patches) {
+	var calleeType = _.get(node, 'callee.type');
+	if (calleeType === 'Identifier' &&
+	_.get(node, 'callee.name') === 'require') {
+		var old = _.get(node, 'arguments[0].value');
+		if (_.has(replacement, old)) {
+			//console.log('replace require (' + required + ') to ' + replaced);
+			patches.push({
+				start: node.range[0],
+				end: node.range[1],
+				replacement: _.isString(replacement[old]) ? replacement[old] : replacement[old].rq
+			});
+		}
+	}
+}
+
+function onRequireEnsure(node, replacement, patches) {
+	var args = node.arguments;
+	if (args.length === 0) {
+		return;
+	}
+	if (args[0].type === 'ArrayExpression') {
+		args[0].elements.forEach(nameNode => {
+			if (nameNode.type !== 'Literal') {
+				log.error('require.ensure() should be called with String literal');
+				return;
+			}
+			var old = nameNode.value;
+			if (_.has(replacement, old) && _.has(replacement[old], 'rs')) {
+				patches.push({
+					start: nameNode.range[0],
+					end: nameNode.range[1],
+					replacement: replacement[old].rs
+				});
+			}
+		});
+	} else if (args[0].type === 'Literal') {
+		var old = _.get(node, 'arguments[0].value');
+		if (_.has(replacement, old) && _.has(replacement[old], 'rs')) {
+			patches.push({
+				start: args[0].range[0],
+				end: args[0].range[1],
+				replacement: replacement[old].rs
+			});
+		}
+	}
 }
 
 function parseCode(code) {
