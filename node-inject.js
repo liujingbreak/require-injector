@@ -179,7 +179,7 @@ Injector.prototype = {
 			return this.inject(calleeModule, path);
 		} catch (e) {
 			if (this.config.debug)
-				log.error('require from : ', calleeModule.id, e.message);
+				log.debug('require from : ', calleeModule.id, e.message);
 			throw e;
 		}
 	},
