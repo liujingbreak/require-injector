@@ -57,13 +57,13 @@ describe('replace-require', ()=> {
 		it('.substitute() should work for sample module1', ()=> {
 			var file = Path.resolve(__dirname, 'node_modules/module1/index.js');
 			var result = rj.injectToFile(file, fs.readFileSync(file, 'utf8'));
-			expect(result).toBe('module.exports = \'module1 \' + require(\'aaa\');\n');
+			expect(_.trim(result)).toBe('module.exports = \'module1 \' + require(\'aaa\');');
 		});
 
 		it('.value() should do JSON stringified for sample module2', ()=> {
 			var file = Path.resolve(__dirname, 'node_modules/module2/index.js');
 			var result = rj.injectToFile(file, fs.readFileSync(file, 'utf8'));
-			expect(result).toBe('module.exports = \'module2 \' + ["AAA"];\n');
+			expect(_.trim(result)).toBe('module.exports = \'module2 \' + ["AAA"];');
 		});
 
 		it('nothing should be changed if file path does not match any injection setting', ()=> {

@@ -16,7 +16,7 @@ describe('Browserify', function() {
 
 function test(entryFile, containedStr, done) {
 	copyToNodeModules();
-	var proc = spawn(Path.resolve('node_modules/.bin/browserify'), [
+	var proc = spawn(Path.resolve('node_modules/.bin/browserify' + (process.platform === 'win32' ? '.cmd' : '')), [
 		entryFile, '--global-transform', '[', 'require-injector/transform',
 		'--inject', 'browserifyInjector.js', ']'
 	], {
@@ -31,6 +31,10 @@ function test(entryFile, containedStr, done) {
 		console.log(output);
 		expect(output.indexOf(containedStr)).toBeGreaterThan(-1);
 		done();
+	})
+	.on('error', err => {
+		console.error(err);
+		return done.fail('failed to execute browserify command,\n' + output);
 	});
 
 	proc.stdout.setEncoding('utf-8');

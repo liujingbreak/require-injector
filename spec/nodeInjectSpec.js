@@ -2,8 +2,9 @@ var rj = require('..');
 var Path = require('path');
 var bresolve = require('browser-resolve').sync;
 var fs = require('fs');
+var _ = require('lodash');
 
-describe('register-node', () => {
+describe('node-injector', () => {
 	describe('for single package and dir', () => {
 		beforeEach(()=> {
 			rj({
@@ -166,7 +167,7 @@ describe('register-node', () => {
 
 			var browserModuleFile = bresolve('@br/browser-module', {basedir: __dirname});
 			var code = rj.injectToFile(browserModuleFile, fs.readFileSync(browserModuleFile, 'utf8'));
-			expect(code).toBe('module.exports = "xxx" + "xxx";\n');
+			expect(_.trim(code)).toBe('module.exports = "xxx" + "xxx";');
 		});
 
 		it('.fromDir() should work with array of directories', ()=> {
@@ -241,7 +242,7 @@ describe('register-node', () => {
 			rj.fromPackage('module2');
 			var foundDir = rj.testable().quickSearchDirByFile(Path.resolve(__dirname, 'dir1_2/test12.js'));
 			console.log(rj.testable().sortedDirs);
-			expect(foundDir).toBe(Path.resolve(__dirname, 'dir1_2') + '/');
+			expect(foundDir).toBe(Path.resolve(__dirname, 'dir1_2').replace(/\\/g, '/') + '/');
 		});
 	});
 });
