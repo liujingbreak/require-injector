@@ -10,6 +10,8 @@ var defaultInstance;
 module.exports.getInstance = function() {
 	return defaultInstance;
 };
+
+module.exports.FactoryMap = FactoryMap;
 /**
  * [Injector description]
  * @param {object} opts optional
@@ -143,33 +145,46 @@ Injector.prototype = {
 		return this.injectionScopeMap[path];
 	},
 
+	/**
+	 * Return configured FactoryMap for source code file depends on the file's location.
+	 * Later on, you can call `factoryMap.getInjector(name)` to get exact inject value
+	 * @return {FactoryMap | null} Null if there is no injector configured for current file
+	 */
+	factoryMapForFile: function(fromFile) {
+		var dir = this.quickSearchDirByFile(fromFile);
+		if (dir) {
+			return this.injectionScopeMap[dir];
+		}
+		return null;
+	},
+
 	inject: function(calleeModule, name) {
 		var dir = this.quickSearchDirByFile(calleeModule.id);
-		if (dir) {
-			var factoryMap = this.injectionScopeMap[dir];
-			var injector = factoryMap.getInjector(name);
-			if (injector) {
-				if (this.config.debug) {
-					log.debug('inject ' + name + ' to ' + dir);
-				}
-				if (_.has(injector, 'factory')) {
-					if (_.isFunction(injector.factory)) {
-						return injector.factory(calleeModule.id);
-					} else {
-						return injector.factory;
-					}
-				} else if (_.has(injector, 'value')) {
-					if (_.has(injector.value, 'value')) {
-						return injector.value.value;
-					} else {
-						return injector.value;
-					}
-				} else if (_.has(injector, 'substitute')) {
-					return this.oldRequire.call(calleeModule, injector.substitute);
-				} else if (_.has(injector, 'variable')) {
-					return injector.variable;
-				}
+		if (dir == null)
+			return this.oldRequire.call(calleeModule, name);
+		var factoryMap = this.injectionScopeMap[dir];
+		var injector = factoryMap.getInjector(name);
+		if (injector == null)
+			return this.oldRequire.call(calleeModule, name);
+		if (this.config.debug) {
+			log.debug('inject ' + name + ' to ' + dir);
+		}
+		if (_.has(injector, 'factory')) {
+			if (_.isFunction(injector.factory)) {
+				return injector.factory(calleeModule.id);
+			} else {
+				return injector.factory;
 			}
+		} else if (_.has(injector, 'value')) {
+			if (_.has(injector.value, 'value')) {
+				return injector.value.value;
+			} else {
+				return injector.value;
+			}
+		} else if (_.has(injector, 'substitute')) {
+			return this.oldRequire.call(calleeModule, injector.substitute);
+		} else if (_.has(injector, 'variable')) {
+			return injector.variable;
 		}
 		return this.oldRequire.call(calleeModule, name);
 	},
@@ -204,18 +219,8 @@ function FactoryMap() {
 	this.requireMap = {};
 }
 FactoryMap.prototype = {
-	factory: function(name, factory) {
-		this.requireMap[name] = {factory: factory};
-		return this;
-	},
-	substitute: function(name, anotherName) {
-		this.requireMap[name] = {substitute: anotherName};
-		return this;
-	},
-	value: function(name, value) {
-		this.requireMap[name] = {value: value};
-		return this;
-	},
+	MOTHODS: ['factory', 'substitute', 'value', 'swigTemplateDir'], // you can extend with new method here
+
 	getInjector: function(name) {
 		if (_.has(this.requireMap, name)) {
 			return this.requireMap[name];
@@ -224,29 +229,47 @@ FactoryMap.prototype = {
 	}
 };
 
+FactoryMap.prototype.MOTHODS.forEach(function(mName) {
+	FactoryMap.prototype[mName] = function(name, value) {
+		this.requireMap[name] = {};
+		this.requireMap[name][mName] = value;
+		return this;
+	};
+});
+
 function FactoryMapCollection(factoryMaps) {
 	this.maps = factoryMaps;
 }
-FactoryMapCollection.prototype = {
-	factory: function() {
+
+FactoryMap.prototype.MOTHODS.forEach(function(method) {
+	FactoryMapCollection.prototype[method] = function() {
 		this.maps.forEach(factoryMap => {
-			factoryMap.factory.apply(factoryMap, arguments);
+			factoryMap[method].apply(factoryMap, arguments);
 		});
 		return this;
-	},
-	substitute: function(name, anotherName) {
-		this.maps.forEach(factoryMap => {
-			factoryMap.substitute.apply(factoryMap, arguments);
-		});
-		return this;
-	},
-	value: function(name, value) {
-		this.maps.forEach(factoryMap => {
-			factoryMap.value.apply(factoryMap, arguments);
-		});
-		return this;
-	}
-};
+	};
+});
+
+// FactoryMapCollection.prototype = {
+// 	factory: function() {
+// 		this.maps.forEach(factoryMap => {
+// 			factoryMap.factory.apply(factoryMap, arguments);
+// 		});
+// 		return this;
+// 	},
+// 	substitute: function(name, anotherName) {
+// 		this.maps.forEach(factoryMap => {
+// 			factoryMap.substitute.apply(factoryMap, arguments);
+// 		});
+// 		return this;
+// 	},
+// 	value: function(name, value) {
+// 		this.maps.forEach(factoryMap => {
+// 			factoryMap.value.apply(factoryMap, arguments);
+// 		});
+// 		return this;
+// 	}
+// };
 
 // var packageNamePattern = /^[^\.\/\\][^:]+/;
 
