@@ -57,6 +57,7 @@ function copyToNodeModules() {
 		'node-inject.js',
 		'replace-require.js',
 		'transform.js',
+		'patch-text.js',
 		'spec/node_modules/require-injector/');
 	shell.cp('package.json', 'spec/node_modules/require-injector/');
 }

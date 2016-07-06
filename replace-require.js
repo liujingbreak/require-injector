@@ -1,5 +1,5 @@
 //var rn = require('./register-node');
-var patchText = require('patch-text');
+var patchText = require('./patch-text.js');
 var esprima = require('esprima');
 var estraverse = require('estraverse');
 var _ = require('lodash');
