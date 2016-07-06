@@ -9,12 +9,25 @@ When it is used for Node, it is a little bit like [app-module-path](https://www.
 
 > Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
 
-### Installation
+- [Installation](#Installation)
+- [Node project example](#dirExample)
+	- [Injection for local files](#injectionLocalFile)
+	- [No relative path needed in require()](#noRelativePath)
+	- [Injection for Node packages](#injectionNodePackages)
+- [Browserify example](#browserifyExample)
+- [Webpack-like split loading module replacement: `require.ensure()`](#requireEnsure)
+- [Replacement](#replacement)
+- [Solution for NodeJS and browser environment](#solutions)
+- [Injection for server side Swig template](#swig)
+- [Injector API](#injectorApi)
+- [FactoryMap API](#factorymapApi)
+
+### <a name="installation">Installation</a>
 ```
 npm install require-injector
 ```
 
-### Example
+### <a name="dirExample">Node project example</a>
 
 Assume you have project structure like below,
 ```
@@ -34,7 +47,7 @@ Assume you have project structure like below,
       └─── module2/index.js, package.json, ...
 ```
 
-#### Injection for local files
+#### <a name="injectionLocalFile">Injection for local files</a>
 In src/dir1/some1.js, there is `require()` calling to `module1`
 ```js
 var m1 = require('module1');
@@ -57,7 +70,7 @@ rj.fromDir(['src/dir1', 'src/dir2'])
 	.factory('module1', function(file) { return something;})
 	.value('module2', 123);
 ```
-#### No relative path needed in require()
+#### <a name="noRelativePath">No relative path needed in require()</a>
 You may don't need require messy relative path anymore. Image you have a common `utils` always be required by different feature folders. Same effect like [app-module-path](https://www.npmjs.com/package/app-module-path)
 ```js
 // In app.js
@@ -79,7 +92,7 @@ In dir1/sub-dir/feature1-1.js
 var utils = require('_utils');
 ```
 
-#### Injection for Node packages
+#### <a name="injectionNodePackages">Injection for Node packages</a>
 You can setup injection for JS file of specific packages, e.g. module1
 ```js
 ...
@@ -90,10 +103,7 @@ rj.fromPackage('module1', require('browser-resolve').sync)
     .substitute('module1-dependencyA', 'anotherPackage');
 ```
 
-
-
-
-### Browserify example
+### <a name="browserifyExample">Browserify example</a>
 If you are packing files to browser side by Browserify,
 ```js
 rj({noNode: true});
@@ -125,7 +135,7 @@ rj.fromPackage('moduleB')
 	...
 ```
 
-### Webpack-like split loading module replacement: `require.ensure()`
+### <a name="requireEnsure">Webpack-like split loading module replacement: `require.ensure()`</a>
 `.substitute()` works for call expression like `require.ensure()`\
 Injection setup in gulp script for Webpack like below,
 ```js
@@ -146,7 +156,7 @@ require.ensure(['module1', 'module2'], function() {
 ```
 > Webpack loader is still in progress, but if you have your own loader, this feature will be handy for you to write your own replacement function.
 
-### Replacement
+### <a name="replacement">Replacement</a>
 You can write your own replacement function for Browserify or Webpack, just call `.injectToFile()`,
 ```js
 var fs = require('fs');
@@ -155,7 +165,7 @@ var replacedCode = rj.injectToFile(filePath, code);
 fs.writeFileSync(filePath, replacedCode);
 ```
 
-### Solution for NodeJS and browser environment
+### <a name="solutions">Solution for NodeJS and browser environment</a>
 - For NodeJS, the injector kidnaps Node's native API `Module.prototype.require()`, so that each `require()` call goes to injector's control, it returns injecting value according to callee file's id (file path).
 
 - For browsers, if you are packing your code by any tool like Browsersify and Webpack, this module plays a role of `tranform`, `loader` or `replacer`, parsing JS code and replacing `require()` expression with stringified injecting value.
@@ -170,11 +180,15 @@ rjNode.fromPackage('feature1')
 
 var rjReplace = rj({noNode: true});
 rjReplace.fromPackage('feature2')
-	.factory('dependency2', 'module2');
+	.substitute('dependency2', 'module2');
 
 ```
+### <a name="swig">Injection for server side Swig template</a>
+We also extend injection function to resource type other than Javascript, if you are using server side Swig template engine,
+this injector can work with [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
 
-### Injector API
+
+### <a name="injectorApi">Injector API</a>
 - #### require('require-injector')( _{object}_ opts )<a name="api1"></a>
 	Must call this function at as beginning as possible of your entry script.
 	It kidnaps Node's native API `Module.prototype.require()`, so every `require()`
@@ -239,9 +253,12 @@ rjReplace.fromPackage('feature2')
 
 - #### cleanup()<a name="api9"></a>
     Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
-### FactoryMap API
+### <a name="factorymapApi">FactoryMap API</a>
 - #### substitute(_{string}_ requiredModule, _{string}_ newModule)<a name="api4"></a>
 	Replacing a required module with requiring another module.
+	> Also support `npm://package` reference in Swig template tags `include` and `import`,
+	check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
+
 	##### Parameters
 	- `requiredModule`: the original module name which is required for, it can't be relative file path, only supports absolute path, a package name or scoped package name.
         > Package name like `lodash/throttle` also works, as long as it can be resolved to same absolute path all the time.
@@ -288,6 +305,9 @@ rjReplace.fromPackage('feature2')
 		```
 	_returns_ chainable FactoryMap
 
+- #### swigTemplateDir(_{string}_ packageName, _{string}_ dir)
+	Replace `npm://package` reference in Swig template tags `include` and `import`,
+	check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
 
 -----
 Now you can require some cool fake module name in your code, and inject/replace them with the real package or value later.
