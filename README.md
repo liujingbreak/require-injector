@@ -273,7 +273,7 @@ this injector can work with [swig-package-tmpl-loader injection](https://www.npm
 
     ##### Parameters
     - `requiredModule`: the original module name which is required for, it can't be a relative file path.
-    - `factory`: A function that returns a value which then will be replaced to the original module of `requiredModule`.
+    - `factory`: A function that returns a value which then will replace the original module of `requiredModule`.
 
         When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
 		```js
@@ -288,7 +288,7 @@ this injector can work with [swig-package-tmpl-loader injection](https://www.npm
 
     ##### Parameters
     - `requiredModule`: the original module name which is required for, it can't be a relative file path.
-    - `value`: the value be replaced to `requiredModule` exports.
+    - `value`: the value to replace `requiredModule` exports.
 
         When `.injectToFile()` is called or `.transform` is used for Browserify, meaning it is not a Node environment, the solution is actually replacing entire `require('requiredModule')` expression with result of `JSON.stringify(value)`.
 
