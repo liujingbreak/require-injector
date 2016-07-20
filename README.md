@@ -273,13 +273,16 @@ this injector can work with [swig-package-tmpl-loader injection](https://www.npm
 
     ##### Parameters
     - `requiredModule`: the original module name which is required for, it can't be a relative file path.
-    - `factory`: A function that returns a value which then will replace the original module of `requiredModule`.
+    - `factory`: A function invoked with 1 argument: `sourceFilePath` and returns a value which then will replace the original module of `requiredModule`.
 
-        When `.injectToFile()` or Browserify bundling with `.transform` is called to files, it actually replaces entire `require('requiredModule')` expression with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
+        **Note**: In browser side replacement mode, or when `.injectToFile()` or Browserify bundling with `.transform` is called to files, it replaces entire `require('requiredModule')` expression with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
 		```js
 		// require('requiredModule'); ->
-		'(' + factory.toString() + ')()';
+		'(' + factory.toString() + ')(sourceFilePath)';
 		```
+		Thus you can not have any reference to any scope variable in factory function.
+
+
 	_returns_ chainable FactoryMap
 
 - #### value(_{string}_ requiredModule, _{*|object}_ value)<a name="api6"></a>

@@ -57,7 +57,7 @@ ReplaceRequire.prototype = _.create(Injector.prototype, {
 					if (_.has(injector, 'factory')) {
 						defineLazyProp(replacement, name, function() {
 							return {
-								rq: '(' + injector.factory.toString() + ')()'
+								rq: '(' + injector.factory.toString() + ')(\'' + filePath + '\')'
 							};
 						});
 					} else if (_.has(injector, 'substitute')) {

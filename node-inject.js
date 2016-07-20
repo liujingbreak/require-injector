@@ -219,7 +219,7 @@ function FactoryMap() {
 	this.requireMap = {};
 }
 FactoryMap.prototype = {
-	MOTHODS: ['factory', 'substitute', 'value', 'swigTemplateDir'], // you can extend with new method here
+	METHODS: ['factory', 'substitute', 'value', 'swigTemplateDir'], // you can extend with new method here
 
 	getInjector: function(name) {
 		if (_.has(this.requireMap, name)) {
@@ -229,7 +229,7 @@ FactoryMap.prototype = {
 	}
 };
 
-FactoryMap.prototype.MOTHODS.forEach(function(mName) {
+FactoryMap.prototype.METHODS.forEach(function(mName) {
 	FactoryMap.prototype[mName] = function(name, value) {
 		this.requireMap[name] = {};
 		this.requireMap[name][mName] = value;
@@ -241,7 +241,7 @@ function FactoryMapCollection(factoryMaps) {
 	this.maps = factoryMaps;
 }
 
-FactoryMap.prototype.MOTHODS.forEach(function(method) {
+FactoryMap.prototype.METHODS.forEach(function(method) {
 	FactoryMapCollection.prototype[method] = function() {
 		this.maps.forEach(factoryMap => {
 			factoryMap[method].apply(factoryMap, arguments);
@@ -249,29 +249,6 @@ FactoryMap.prototype.MOTHODS.forEach(function(method) {
 		return this;
 	};
 });
-
-// FactoryMapCollection.prototype = {
-// 	factory: function() {
-// 		this.maps.forEach(factoryMap => {
-// 			factoryMap.factory.apply(factoryMap, arguments);
-// 		});
-// 		return this;
-// 	},
-// 	substitute: function(name, anotherName) {
-// 		this.maps.forEach(factoryMap => {
-// 			factoryMap.substitute.apply(factoryMap, arguments);
-// 		});
-// 		return this;
-// 	},
-// 	value: function(name, value) {
-// 		this.maps.forEach(factoryMap => {
-// 			factoryMap.value.apply(factoryMap, arguments);
-// 		});
-// 		return this;
-// 	}
-// };
-
-// var packageNamePattern = /^[^\.\/\\][^:]+/;
 
 /**
  * Return -1, if file does not belong to any of directories `folders`
