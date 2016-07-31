@@ -4,6 +4,7 @@ var resolve = require('resolve').sync;
 var mothership = require('mothership').sync;
 var Path = require('path');
 var log = require('log4js').getLogger('require-injector.node-inject');
+var fs = require('fs');
 
 module.exports = Injector;
 var defaultInstance;
@@ -143,6 +144,26 @@ Injector.prototype = {
 			this.injectionScopeMap[path] = new FactoryMap();
 		}
 		return this.injectionScopeMap[path];
+	},
+
+	/**
+	 * If a path contains symbolic link, return the exact real path
+	 * @return {[type]} [description]
+	 */
+	parseSymbolicLinkPath: function(path) {
+		path = Path.resolve(path);
+		try {
+			fs.accessSync(path, fs.F_OK);
+		} catch (e) {
+			log.debug(e);
+		}
+		var root = Path.parse(path).root;
+		var dir = path;
+		while (dir !== root) {
+			fs.lstat(path).isSymbolicLink();
+			dir = Path.dirname(path);
+		}
+		
 	},
 
 	/**
