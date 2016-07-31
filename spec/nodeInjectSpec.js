@@ -5,6 +5,14 @@ var fs = require('fs');
 var _ = require('lodash');
 
 describe('node-injector', () => {
+	beforeAll(()=> {
+		try {
+			fs.accessSync(Path.resolve(__dirname, 'link'), fs.F_OK);
+		} catch (e) {
+			fs.symlinkSync('./dir1_', Path.resolve(__dirname, 'link'));
+		}
+	});
+
 	describe('for single package and dir', () => {
 		beforeEach(()=> {
 			rj({
@@ -59,14 +67,20 @@ describe('node-injector', () => {
 		});
 
 		it('.sortedPackagePathList should contains configured packages and', ()=> {
+			rj.fromDir('spec/link');
 			var folders = rj.testable().sortedDirs.map(path => {
 				return path.substring(__dirname.length + 1);
 			});
-			expect(folders).toEqual([
+			expect(_.difference(folders, ['dir1_/', 'link/',
 				'a/', 'dir1/', 'dir1_2/', 'dir2/',
 				'node_modules/module1/',
 				'node_modules/module2/'
-			]);
+			])).toEqual([]);
+			expect(_.difference(['dir1_/', 'link/',
+				'a/', 'dir1/', 'dir1_2/', 'dir2/',
+				'node_modules/module1/',
+				'node_modules/module2/'
+			], folders)).toEqual([]);
 		});
 
 		it('.quickSearchDirByFile() should work', () => {

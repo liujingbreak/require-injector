@@ -6,3 +6,4 @@ config.local.yaml
 /dist
 dist
 /spec/node_modules/require-injector/*
+/spec/link

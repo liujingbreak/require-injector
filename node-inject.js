@@ -13,6 +13,7 @@ module.exports.getInstance = function() {
 };
 
 module.exports.FactoryMap = FactoryMap;
+module.exports.parseSymlink = parseSymlink;
 /**
  * [Injector description]
  * @param {object} opts optional
@@ -57,7 +58,8 @@ Injector.prototype = {
 		if (defaultInstance === this) {
 			defaultInstance = null;
 		}
-		log.debug('cleanup');
+		if (this.config.debug)
+			log.debug('cleanup');
 	},
 
 	fromPackage: function(packageName, resolveOpts) {
@@ -124,11 +126,17 @@ Injector.prototype = {
 	 * @return {[type]}      [description]
 	 */
 	_fromDir: function(path, dirs) {
-		if (Path.sep === '\\') {
-			path = path.replace(/\\/g, '/');
+		var factory;
+		var linked = parseSymlink(path);
+		if (linked !== path) {
+			log.debug('%s is symbolic link path to %s', path, linked);
+			factory = this._createFactoryMapFor(linked, dirs);
 		}
-		if (!_.endsWith(path, '/'))
-			path += '/';
+		return this._createFactoryMapFor(path, dirs, factory);
+	},
+
+	_createFactoryMapFor: function(path, dirs, existingFactory) {
+		path = this._pathToSortKey(path);
 		var idx = _.sortedIndex(dirs, path);
 		if (dirs[idx] !== path) {
 			if (idx > 0 && _.startsWith(path, dirs[idx - 1])) {
@@ -141,29 +149,18 @@ Injector.prototype = {
 			}
 			// Not found existing, insert it into sorted list
 			dirs.splice(idx, 0, path);
-			this.injectionScopeMap[path] = new FactoryMap();
+			this.injectionScopeMap[path] = existingFactory ? existingFactory : new FactoryMap();
 		}
-		return this.injectionScopeMap[path];
+		return existingFactory ? existingFactory : this.injectionScopeMap[path];
 	},
 
-	/**
-	 * If a path contains symbolic link, return the exact real path
-	 * @return {[type]} [description]
-	 */
-	parseSymbolicLinkPath: function(path) {
-		path = Path.resolve(path);
-		try {
-			fs.accessSync(path, fs.F_OK);
-		} catch (e) {
-			log.debug(e);
+	_pathToSortKey: function(path, dirs) {
+		if (Path.sep === '\\') {
+			path = path.replace(/\\/g, '/');
 		}
-		var root = Path.parse(path).root;
-		var dir = path;
-		while (dir !== root) {
-			fs.lstat(path).isSymbolicLink();
-			dir = Path.dirname(path);
-		}
-		
+		if (!_.endsWith(path, '/'))
+			path += '/';
+		return path;
 	},
 
 	/**
@@ -188,7 +185,7 @@ Injector.prototype = {
 		if (injector == null)
 			return this.oldRequire.call(calleeModule, name);
 		if (this.config.debug) {
-			log.debug('inject ' + name + ' to ' + dir);
+			log.debug('inject %s to %s', name, dir);
 		}
 		if (_.has(injector, 'factory')) {
 			if (_.isFunction(injector.factory)) {
@@ -285,4 +282,38 @@ function findDirIndexOfFile(file, folders) {
 		return -1;
 	}
 	return idx - 1;
+}
+
+/**
+ * If a path contains symbolic link, return the exact real path
+ * Unlike fs.realpath, it also works for nonexist path
+ * @return {[type]} [description]
+ */
+function parseSymlink(path) {
+	try {
+		fs.accessSync(path, fs.F_OK);
+		return fs.realpathSync(path);
+	} catch (e) {}
+	path = Path.resolve(path);
+	var parsed = Path.parse(path);
+	var dir = parsed.root;
+	var pathElements = path.split(Path.sep).slice(1);
+	pathElements.some((el, index) => {
+		if (!_.endsWith(dir, Path.sep))
+			dir += Path.sep;
+		dir += el;
+		try {
+			fs.accessSync(dir, fs.F_OK);
+		} catch (e) {
+			var restPart = pathElements.slice(index + 1).join(Path.sep);
+			dir += restPart.length > 0 ? Path.sep + restPart : restPart;
+			return true;
+		}
+		if (fs.lstatSync(dir).isSymbolicLink()) {
+			var link = fs.readlinkSync(dir);
+			dir = Path.resolve(Path.dirname(dir), link);
+		}
+		return false;
+	});
+	return dir;
 }
