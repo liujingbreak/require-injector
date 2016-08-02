@@ -3,13 +3,14 @@ var Path = require('path');
 var bresolve = require('browser-resolve').sync;
 var fs = require('fs');
 var _ = require('lodash');
+var isWin32 = require('os').platform();
 
 describe('node-injector', () => {
 	beforeAll(()=> {
 		try {
 			fs.accessSync(Path.resolve(__dirname, 'link'), fs.F_OK);
 		} catch (e) {
-			fs.symlinkSync('./dir1_', Path.resolve(__dirname, 'link'));
+			fs.symlinkSync('./dir1_', Path.resolve(__dirname, 'link'), isWin32 ? 'junction' : 'dir');
 		}
 	});
 
