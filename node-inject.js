@@ -14,6 +14,13 @@ module.exports.getInstance = function() {
 
 module.exports.FactoryMap = FactoryMap;
 module.exports.parseSymlink = parseSymlink;
+
+
+var emptyFactoryMap = {
+	factory: emptryChainableFunction,
+	substitute: emptryChainableFunction,
+	value:  emptryChainableFunction
+};
 /**
  * [Injector description]
  * @param {object} opts optional
@@ -89,12 +96,22 @@ Injector.prototype = {
 		if (!resolveOpts) {
 			resolveOpts = this.config.resolveOpts;
 		}
-		var mainJsPath = resolveSync(packageName, resolveOpts);
-		var jsonPath = mothership(mainJsPath, function(json) {
-			return json.name === packageName;
-		}).path;
+		var mainJsPath, jsonPath;
+		try {
+			mainJsPath = resolveSync(packageName, resolveOpts);
+			jsonPath = mothership(mainJsPath, function(json) {
+				return json.name === packageName;
+			}).path;
+		} catch (e) {
+			if (e.code === 'MODULE_NOT_FOUND') {
+				log.info(packageName + ' is not Found, will be skipped from .fromPackage()');
+				return emptyFactoryMap;
+			}
+			throw e;
+		}
 		if (jsonPath == null) {
-			throw new Error(packageName + ' is not Found');
+			log.info(packageName + ' is not Found, will be skipped from .fromPackage()');
+			return emptyFactoryMap;
 		}
 		var path = Path.dirname(jsonPath);
 		return this._fromDir(path, this.sortedDirs);
@@ -316,4 +333,8 @@ function parseSymlink(path) {
 		return false;
 	});
 	return dir;
+}
+
+function emptryChainableFunction() {
+	return emptyFactoryMap;
 }
