@@ -33,15 +33,15 @@ Assume you have project structure like below,
 ```
 /
 ├─── src
-|    ├─── dir1
-|    |     ├─── sub-dir
-|    |     |      └─── feature1-1.js
-|    |     └─── feature1.js
-|    └─── dir2
-|          └─── feature2.js
+│    ├─── dir1
+│    │     ├─── sub-dir
+│    │     │      └─── feature1-1.js
+│    │     └─── feature1.js
+│    └─── dir2
+│          └─── feature2.js
 ├─── app.js
 ├─── utils
-|      └─── index.js
+│      └─── index.js
 └─── node_modules
       ├─── module1/index.js, package.json, ...
       └─── module2/index.js, package.json, ...
