@@ -251,6 +251,13 @@ this injector can work with [swig-package-tmpl-loader injection](https://www.npm
 
 	_returns_ replaced source code, if there is no injectable `require()`, same source code will be returned.
 
+- #### factoryMapForFile({string} filePath)
+	Return configured FactoryMap for source code file depends on the file's location, using binary search. Later on, you can call `factoryMap.getInjector(name)` to get exact inject value.
+	> Normally, you don't need to call this function directly.
+
+	*returns* {`FactoryMap | null`} Null if there is no injector configured for current file.
+
+
 - #### cleanup()<a name="api9"></a>
     Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
 ### <a name="factorymapApi">FactoryMap API</a>
