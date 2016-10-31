@@ -1,6 +1,7 @@
 //var rn = require('./register-node');
 var patchText = require('./patch-text.js');
-var esprima = require('esprima');
+//var esprima = require('esprima');
+var acorn = require('acorn');
 var estraverse = require('estraverse');
 var _ = require('lodash');
 var through = require('through2');
@@ -10,6 +11,10 @@ var log = require('log4js').getLogger('require-injector.replace-require');
 module.exports = ReplaceRequire;
 module.exports.replace = replace;
 
+/**
+ * opts.enableFactoryParamFile `true` if you need "filePath" as parameter for .factory(factory(filePath) {...})
+ * 	this will expose original source file path in code, default is `false`.
+ */
 function ReplaceRequire(opts) {
 	if (!(this instanceof ReplaceRequire)) {
 		return new ReplaceRequire(opts);
@@ -37,7 +42,7 @@ function ReplaceRequire(opts) {
 ReplaceRequire.prototype = _.create(Injector.prototype, {
 	/**
 	 * Here "inject" is actually "replacement".
-	 Parsing a matched file to Esprima AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.
+	 Parsing a matched file to Acorn AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.
 	 * @name injectToFile
 	 * @param  {string} filePath file path
 	 * @param  {string} code     content of file
@@ -52,12 +57,12 @@ ReplaceRequire.prototype = _.create(Injector.prototype, {
 			if (dir) {
 				factoryMap = this.injectionScopeMap[dir];
 				var replacement = {};
-
+				var fileParam = this.config.enableFactoryParamFile ? '\'' + filePath + '\'' : '';
 				_.each(factoryMap.requireMap, function(injector, name) {
 					if (_.has(injector, 'factory')) {
 						defineLazyProp(replacement, name, function() {
 							return {
-								rq: '(' + injector.factory.toString() + ')(\'' + filePath + '\')'
+								rq: '(' + injector.factory.toString() + ')(' + fileParam + ')'
 							};
 						});
 					} else if (_.has(injector, 'substitute')) {
@@ -178,5 +183,6 @@ function onRequireEnsure(node, replacement, patches) {
 }
 
 function parseCode(code) {
-	return esprima.parse(code, {range: true, loc: false});
+	//return esprima.parse(code, {range: true, loc: false});
+	return acorn.parse(code, {ranges: true});
 }

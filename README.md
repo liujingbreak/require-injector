@@ -287,7 +287,11 @@ this injector can work with [swig-package-tmpl-loader injection](https://www.npm
 		// require('requiredModule'); ->
 		'(' + factory.toString() + ')(sourceFilePath)';
 		```
-		Thus you can not have any reference to any scope variable in factory function.
+		> Change from 0.5.0, in replacement mode, parameter `sourceFilePath` will no longer be present, since this would expose
+		original source file path of your file system, if you still want to obtain `sourceFilePath`, set option `.enableFactoryParamFile`
+		to `true`
+
+		Thus you can not have any reference to any closure variable in factory function.
 
 
 	_returns_ chainable FactoryMap
