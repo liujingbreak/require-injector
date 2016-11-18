@@ -1,5 +1,5 @@
-var Replacer = require('./replace-require');
-var Injector = require('./node-inject');
+var Replacer = require('./lib/replace-require');
+var Injector = require('./lib/node-inject');
 var _ = require('lodash');
 
 module.exports = Replacer;

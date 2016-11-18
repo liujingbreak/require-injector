@@ -53,11 +53,11 @@ function cleanup() {
 
 function copyToNodeModules() {
 	shell.mkdir('-p', 'spec/node_modules/require-injector');
-	shell.cp('-r', 'index.js',
-		'node-inject.js',
-		'replace-require.js',
-		'transform.js',
-		'patch-text.js',
+	shell.cp('-r', 'lib',
+		// 'node-inject.js',
+		// 'replace-require.js',
+		// 'transform.js',
+		// 'patch-text.js',
 		'spec/node_modules/require-injector/');
 	shell.cp('package.json', 'spec/node_modules/require-injector/');
 }
