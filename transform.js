@@ -1,5 +1,5 @@
 var Path = require('path');
-var rj = require('./index');
+var rj = require('.');
 
 module.exports = function(file, opts) {
 	if (!opts.hasOwnProperty('inject')) {
