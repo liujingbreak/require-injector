@@ -248,154 +248,154 @@ this injector can work with [swig-package-tmpl-loader injection](https://www.npm
 ### Injector API
 <a id="markdown-[require('require-injector')( _{object}_ opts )](#requirerequire-injector-_object_-opts-)" name="[require('require-injector')( _{object}_ opts )](#requirerequire-injector-_object_-opts-)"></a>
 #### require('require-injector')( _{object}_ opts )
-	Must call this function at as beginning as possible of your entry script.
-	It kidnaps Node's native API `Module.prototype.require()`, so every `require()`
-	call actually goes to its management.
-    ##### Parameters
-	`opts`: optional, global options:
+Must call this function at as beginning as possible of your entry script.
+It kidnaps Node's native API `Module.prototype.require()`, so every `require()`
+call actually goes to its management.
+##### Parameters
+`opts`: optional, global options:
 
-	- `opts.basedir`: _{string}_ default is process.cwd(), used to resolve relative path in `.fromDir(path)`
-	- `opts.resolve`: _{function(id)}_, default is[reolve](https://www.npmjs.com/package/resolve)`.sync`, you may also use Node API `require.resolve` or [browser-resolve](https://www.npmjs.com/package/browser-resole)`.sync`
-	- `opts.resolveOpts`:  _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
-    - `noNode`: _{boolean}_  default is false, if you only use it as a replacer like Browserify's transform or Webpack's loader, you don't want injection work on NodeJS side, no kidnapping on `Module.prototype.require`, just set this property to `true`. And this will turn default `opts.resolve` to `require('browser-resolve').sync`.
-	- `opts.debug`: _{boolean}_ if true, log4js will be enabled to print out logs
+- `opts.basedir`: _{string}_ default is process.cwd(), used to resolve relative path in `.fromDir(path)`
+- `opts.resolve`: _{function(id)}_, default is[reolve](https://www.npmjs.com/package/resolve)`.sync`, you may also use Node API `require.resolve` or [browser-resolve](https://www.npmjs.com/package/browser-resole)`.sync`
+- `opts.resolveOpts`:  _{object}_  set a global [resolve](https://www.npmjs.com/package/resolve) options which is for `.fromPackage(path, opts)`
+- `noNode`: _{boolean}_  default is false, if you only use it as a replacer like Browserify's transform or Webpack's loader, you don't want injection work on NodeJS side, no kidnapping on `Module.prototype.require`, just set this property to `true`. And this will turn default `opts.resolve` to `require('browser-resolve').sync`.
+- `opts.debug`: _{boolean}_ if true, log4js will be enabled to print out logs
 
 
 <a id="markdown-[fromPackage( _{string|array}_ nodePackageName, _{function}_ resolve, _{object}_ opts)](#frompackage-_stringarray_-nodepackagename-_function_-resolve-_object_-opts)" name="[fromPackage( _{string|array}_ nodePackageName, _{function}_ resolve, _{object}_ opts)](#frompackage-_stringarray_-nodepackagename-_function_-resolve-_object_-opts)"></a>
 #### fromPackage( _{string|array}_ nodePackageName, _{function}_ resolve, _{object}_ opts)
-	Adding one or multiple packages to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.
-	##### Parameters
-	- `nodePackageName`: Node package's name or array of multiple package names
-    - `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
+Adding one or multiple packages to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.
+##### Parameters
+- `nodePackageName`: Node package's name or array of multiple package names
+- `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
 
-        If the package is a Browserify package, you may use [browser-resolve](https://www.npmjs.com/package/browser-resolve)`.sync`. Or you turn on global option `{noNode: true}`, then it will by default use browser-resolve.sync.‘’
-	- `opts`: optional, options object passed to [resolve](https://www.npmjs.com/package/resolve),
+	If the package is a Browserify package, you may use [browser-resolve](https://www.npmjs.com/package/browser-resolve)`.sync`. Or you turn on global option `{noNode: true}`, then it will by default use browser-resolve.sync.‘’
+- `opts`: optional, options object passed to [resolve](https://www.npmjs.com/package/resolve),
 
-	Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve).
+Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve).
 
-	_returns_ chainable FactoryMap
+_returns_ chainable FactoryMap
 
 <a id="markdown-[fromDir( _{string|array}_ directory)](#fromdir-_stringarray_-directory)" name="[fromDir( _{string|array}_ directory)](#fromdir-_stringarray_-directory)"></a>
 #### fromDir( _{string|array}_ directory)
-	Adding one or multiple directories to injection setting, all files under this directory will be injectable.
-    > The internal directory list are sorted and can be binary searched when `Module.prototype.require()` is called against each file. So the performance of dynamic injection should be not bad
+Adding one or multiple directories to injection setting, all files under this directory will be injectable.
+> The internal directory list are sorted and can be binary searched when `Module.prototype.require()` is called against each file. So the performance of dynamic injection should be not bad
 
-	##### Parameters
-	- `directory`: if this is a relative path, you must call `requireInjector({basedir: rootDir})`
-		to tell a base directory
-		> It doesn't not allow to add any overlap directories like a parent directory or a sub-directory of any added directories, it will throw an Error for that case.
+##### Parameters
+- `directory`: if this is a relative path, you must call `requireInjector({basedir: rootDir})`
+	to tell a base directory
+	> It doesn't not allow to add any overlap directories like a parent directory or a sub-directory of any added directories, it will throw an Error for that case.
 
-		e.g.
-		```js
-		rj.fromDir('src/dir1');
-		rj.fromDir('src/dir1/sub-dir'); //.fromDir() it will throw Error
-		```
+	e.g.
+	```js
+	rj.fromDir('src/dir1');
+	rj.fromDir('src/dir1/sub-dir'); //.fromDir() it will throw Error
+	```
 
-	_returns_ chainable FactoryMap
+_returns_ chainable FactoryMap
 
 <a id="markdown-[transform(filePath)](#transformfilepath)" name="[transform(filePath)](#transformfilepath)"></a>
 #### transform(filePath)
-    A Browserify JS file transform function to replace `require()` expression with proper injection.
-	```js
-	// add to Browserify as a transform
-	browserify.transform(rj.transform, {global: true});
-	```
-	_returns_ through-stream
+A Browserify JS file transform function to replace `require()` expression with proper injection.
+```js
+// add to Browserify as a transform
+browserify.transform(rj.transform, {global: true});
+```
+_returns_ through-stream
 
 <a id="markdown-[injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)](#injecttofile_string_-filepath-_string_-code-_object_-ast)" name="[injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)](#injecttofile_string_-filepath-_string_-code-_object_-ast)"></a>
 #### injectToFile(_{string}_ filePath, _{string}_ code, _{object}_ ast)
-	Here "inject" is actually "replacement".
-	Parsing a matched file to Esprima AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.
-	##### Parameters
-	- `filePath`: file path
-	- `code`: content of file
-	- `ast`: optional, if you have already parsed code to[esrima](https://www.npmjs.com/package/esprima) AST tree with `{range: true}` option, pass it to this function which helps to speed up process by skip parsing again.
+Here "inject" is actually "replacement".
+Parsing a matched file to Esprima AST tree, looking for matched `require(module)` expression and replacing them with proper values, expression.
+##### Parameters
+- `filePath`: file path
+- `code`: content of file
+- `ast`: optional, if you have already parsed code to[esrima](https://www.npmjs.com/package/esprima) AST tree with `{range: true}` option, pass it to this function which helps to speed up process by skip parsing again.
 
-	_returns_ replaced source code, if there is no injectable `require()`, same source code will be returned.
+_returns_ replaced source code, if there is no injectable `require()`, same source code will be returned.
 
 <a id="markdown-[factoryMapForFile({string} filePath)](#factorymapforfilestring-filepath)" name="[factoryMapForFile({string} filePath)](#factorymapforfilestring-filepath)"></a>
 #### factoryMapForFile({string} filePath)
-	Return configured FactoryMap for source code file depends on the file's location, using binary search. Later on, you can call `factoryMap.getInjector(name)` to get exact inject value.
-	> Normally, you don't need to call this function directly.
+Return configured FactoryMap for source code file depends on the file's location, using binary search. Later on, you can call `factoryMap.getInjector(name)` to get exact inject value.
+> Normally, you don't need to call this function directly.
 
-	*returns* {`FactoryMap | null`} Null if there is no injector configured for current file.
+*returns* {`FactoryMap | null`} Null if there is no injector configured for current file.
 
 
 <a id="markdown-[cleanup()](#cleanup)" name="[cleanup()](#cleanup)"></a>
 #### cleanup()
-    Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
+Remove all packages and directories set by `.fromDir()` and `.fromPackage()`, also release `Module.prototype.require()`, injection will stop working.
 <a id="markdown-[FactoryMap API](#factorymap-api)" name="[FactoryMap API](#factorymap-api)"></a>
 ### FactoryMap API
 <a id="markdown-[substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)" name="[substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)"></a>
 #### substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)
-	Replacing a required module with requiring another module.
-	> Also support `npm://package` reference in Swig template tags `include` and `import`,
-	check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
+Replacing a required module with requiring another module.
+> Also support `npm://package` reference in Swig template tags `include` and `import`,
+check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
 
-	##### Parameters
-	- `requiredModule`: the original module name which is required for, it can't be relative file path, only supports absolute path, a package name or Regular Expression.
-        > Package name like `lodash/throttle` also works, as long as it can be resolved to same absolute path all the time.
+##### Parameters
+- `requiredModule`: the original module name which is required for, it can't be relative file path, only supports absolute path, a package name or Regular Expression.
+	> Package name like `lodash/throttle` also works, as long as it can be resolved to same absolute path all the time.
 
-	- `newModule`: the new module name that is replaced with.\
-	If `newModule` is a function, it will be passed in 2 parameters: `sourceFilePath` and `regexpExecResult`, and must return string value of replaced module name.
+- `newModule`: the new module name that is replaced with.\
+If `newModule` is a function, it will be passed in 2 parameters: `sourceFilePath` and `regexpExecResult`, and must return string value of replaced module name.
 
 
-	_returns_ chainable FactoryMap
+_returns_ chainable FactoryMap
 
 <a id="markdown-[factory(_{string|RegExp}_ requiredModule, _{function}_ factory)](#factory_stringregexp_-requiredmodule-_function_-factory)" name="[factory(_{string|RegExp}_ requiredModule, _{function}_ factory)](#factory_stringregexp_-requiredmodule-_function_-factory)"></a>
 #### factory(_{string|RegExp}_ requiredModule, _{function}_ factory)
-    Replacing a required module with a function returned value.
-	> Not work for `require.ensure()`
+Replacing a required module with a function returned value.
+> Not work for `require.ensure()`
 
-    ##### Parameters
-    - `requiredModule`: the original module name which is required for, it can't be a relative file path.
-    - `factory`: A function invoked with 1 argument: `sourceFilePath` and returns a value which then will replace the original module of `requiredModule`.
+##### Parameters
+- `requiredModule`: the original module name which is required for, it can't be a relative file path.
+- `factory`: A function invoked with 1 argument: `sourceFilePath` and returns a value which then will replace the original module of `requiredModule`.
 
-        **Note**: In browser side replacement mode, it replaces entire `require('requiredModule')` expression in source code with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
-		```js
-		// require('requiredModule'); ->
-		'(' + factory.toString() + ')(sourceFilePath, regexpExecResult)';
-		```
-		> In replacement mode, parameter `sourceFilePath` will be null by default, since this would expose
-		original source file path of your file system, if you still want to obtain `sourceFilePath`, set option `.enableFactoryParamFile`
-		to `true`
+	**Note**: In browser side replacement mode, it replaces entire `require('requiredModule')` expression in source code with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
+	```js
+	// require('requiredModule'); ->
+	'(' + factory.toString() + ')(sourceFilePath, regexpExecResult)';
+	```
+	> In replacement mode, parameter `sourceFilePath` will be null by default, since this would expose
+	original source file path of your file system, if you still want to obtain `sourceFilePath`, set option `.enableFactoryParamFile`
+	to `true`
 
-		The factory eventually stands in source code, not NodeJS runtime.
-		Thus you can not have any reference to any closure variable in factory function.
+	The factory eventually stands in source code, not NodeJS runtime.
+	Thus you can not have any reference to any closure variable in factory function.
 
 
-	_returns_ chainable FactoryMap
+_returns_ chainable FactoryMap
 
 <a id="markdown-[value(_{string|RegExp}_ requiredModule, _{*|function}_ value)](#value_stringregexp_-requiredmodule-_function_-value)" name="[value(_{string|RegExp}_ requiredModule, _{*|function}_ value)](#value_stringregexp_-requiredmodule-_function_-value)"></a>
 #### value(_{string|RegExp}_ requiredModule, _{*|function}_ value)
-    Replacing a required module with any object or primitive value.
-	> Not work for `require.ensure()`
+Replacing a required module with any object or primitive value.
+> Not work for `require.ensure()`
 
-    ##### Parameters
-    - `requiredModule`: the original module name which is required for, it can't be a relative file path.
-    - `value`: the value to replace `requiredModule` exports.
+##### Parameters
+- `requiredModule`: the original module name which is required for, it can't be a relative file path.
+- `value`: the value to replace `requiredModule` exports.
 
-        When `.injectToFile()` is called or `.transform` is used for Browserify, meaning it is not a Node environment, the solution is actually replacing entire `require('requiredModule')`‘’ expression with result of `JSON.stringify(value)`.
+	When `.injectToFile()` is called or `.transform` is used for Browserify, meaning it is not a Node environment, the solution is actually replacing entire `require('requiredModule')`‘’ expression with result of `JSON.stringify(value)`.
 
-        Sometimes, the value is variable reference,
-		you wouldn't want `JSON.stringify` for it, you can use an object expression:
-         - _{string}_ `value.replacement`: The replaced string literal as variable expression, same as what `.replaceCode()` does.
-         - _{object}_ `value.value`: Node require injection value
-		```js
-		rj.fromDir('dir1')
-		.value('replaceMe', {
-			replacement: 'window.jQuery', // for Browserify transform
-			value: cheerio   // for Node require() injection
-		})
-		```
-		If `value` is a function, it will be passed in 2 parameters: `sourceFilePath` and `regexpExecResult`, and must return some value.
+	Sometimes, the value is variable reference,
+	you wouldn't want `JSON.stringify` for it, you can use an object expression:
+		- _{string}_ `value.replacement`: The replaced string literal as variable expression, same as what `.replaceCode()` does.
+		- _{object}_ `value.value`: Node require injection value
+	```js
+	rj.fromDir('dir1')
+	.value('replaceMe', {
+		replacement: 'window.jQuery', // for Browserify transform
+		value: cheerio   // for Node require() injection
+	})
+	```
+	If `value` is a function, it will be passed in 2 parameters: `sourceFilePath` and `regexpExecResult`, and must return some value.
 
-	_returns_ chainable FactoryMap
+_returns_ chainable FactoryMap
 
 <a id="markdown-[swigTemplateDir(_{string}_ packageName, _{string}_ dir)](#swigtemplatedir_string_-packagename-_string_-dir)" name="[swigTemplateDir(_{string}_ packageName, _{string}_ dir)](#swigtemplatedir_string_-packagename-_string_-dir)"></a>
 #### swigTemplateDir(_{string}_ packageName, _{string}_ dir)
-	Replace `npm://package` reference in Swig template tags `include` and `import`,
-	check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
+Replace `npm://package` reference in Swig template tags `include` and `import`,
+check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
 
 -----
 Now you can require some cool fake module name in your code, and inject/replace them with the real package or value later.
