@@ -379,8 +379,8 @@ Replacing a required module with any object or primitive value.
 
 	Sometimes, the value is variable reference,
 	you wouldn't want `JSON.stringify` for it, you can use an object expression:
-		- _{string}_ `value.replacement`: The replaced string literal as variable expression, same as what `.replaceCode()` does.
-		- _{object}_ `value.value`: Node require injection value
+	- _{string}_ `value.replacement`: The replaced string literal as variable expression, same as what `.replaceCode()` does.
+	- _{object}_ `value.value`: Node require injection value
 	```js
 	rj.fromDir('dir1')
 	.value('replaceMe', {
