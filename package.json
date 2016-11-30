@@ -1,6 +1,6 @@
 {
   "name": "require-injector",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Injecting and replacing require() function in both NodeJS and browser side CommonJS packing tool like Browserify.",
   "main": "index.js",
   "scripts": {
@@ -37,11 +37,11 @@
     "acorn": "^4.0.3",
     "estraverse": "^4.2.0",
     "lodash": "^4.13.1",
-    "log4js": "^0.6.36",
+    "log4js": "^1.0.1",
     "mothership": "^0.3.0",
     "resolve": "^1.1.7",
     "browser-resolve": "^1.11.2",
-    "through2": "^2.0.1"
+    "through2": "^2.0.3"
   },
   "devDependencies": {
     "browserify": "^13.0.1",
