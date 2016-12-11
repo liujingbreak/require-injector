@@ -142,9 +142,13 @@ describe('replace-require', ()=> {
 		});
 
 		it('.substitute() should work for sample module1', ()=> {
+			var onReplace = jasmine.createSpy('onReplace');
+			rj.on('replace', onReplace);
 			var file = Path.resolve(__dirname, 'node_modules/module1/index.js');
 			var result = rj.injectToFile(file, fs.readFileSync(file, 'utf8'));
 			expect(_.trim(result)).toBe('module.exports = \'module1 \' + require("aaa");');
+			expect(onReplace.calls.count()).toBe(1);
+			console.log('onReplace(): ', onReplace.calls.allArgs())
 		});
 
 		it('.value() should do JSON stringified for sample module2', ()=> {

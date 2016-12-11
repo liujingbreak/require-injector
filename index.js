@@ -1,6 +1,7 @@
 var Replacer = require('./lib/replace-require');
 var Injector = require('./lib/node-inject');
 var _ = require('lodash');
+var Events = require('events');
 
 module.exports = Replacer;
 module.exports.getInstance = Injector.getInstance;
@@ -15,6 +16,14 @@ _.forOwn(Injector.prototype, function(func, prop) {
 				}
 				throw new Error('Must call requireInjector(opts) first');
 			}
+			return func.apply(Injector.getInstance(), arguments);
+		};
+	}
+});
+
+_.forOwn(Events.prototype, function(func, prop) {
+	if (_.isFunction(func)) {
+		module.exports[prop] = function() {
 			return func.apply(Injector.getInstance(), arguments);
 		};
 	}

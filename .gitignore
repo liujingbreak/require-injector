@@ -7,3 +7,4 @@ config.local.yaml
 dist
 /spec/node_modules/require-injector/*
 /spec/link
+.vscode
