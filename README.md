@@ -111,7 +111,18 @@ In dir1/sub-dir/feature1-1.js
 // var utils = require('../../utils');
 var utils = require('_utils');
 ```
-
+Since v2.0.0
+hierarchical directors setting is supported. Injector setting can be configured on
+different level directories, lower level directory's setting takes precedence. 
+```js
+rj({basedir: __dirname});
+rj.fromDir('src/dir1')
+	.substitute('module1', 'module2');
+rj.fromDir('src')
+	.substitute('module1', 'module3');
+```
+All files under `src/dir1` will be injected with 'module2'.
+Any of other files from `src/**/*` will be injected with 'module3'.
 
 #### Injection for Node packages
 You can setup injection for JS file of specific packages, e.g. module1
@@ -208,7 +219,8 @@ rjReplace.fromPackage('feature2')
 	.substitute('dependency2', 'module2');
 
 ```
-
+### Changes in v2.0.0
+Supporting hierarchical directory setting.
 
 ### New features since v1.0.0
 - Using regular expression to match module name in `require(name)` or `require.ensure([name, ...])` (For NodeJS performance reason, only support under replacement mode `{noNode: true}`)
@@ -279,14 +291,6 @@ Adding one or multiple directories to injection setting, all files under this di
 ##### Parameters
 - `directory`: if this is a relative path, you must call `requireInjector({basedir: rootDir})`
 	to tell a base directory
-	> It doesn't not allow to add any overlap directories like a parent directory or a sub-directory of any added directories, it will throw an Error for that case.
-
-	e.g.
-	```js
-	rj.fromDir('src/dir1');
-	rj.fromDir('src/dir1/sub-dir'); //.fromDir() it will throw Error
-	```
-
 _returns_ chainable FactoryMap
 
 #### transform(filePath)
