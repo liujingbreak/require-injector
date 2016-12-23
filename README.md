@@ -20,6 +20,7 @@ When it is used for Node, it is a little bit like [app-module-path](https://www.
 - [Webpack-like split loading module replacement: `require.ensure()`](#webpack-like-split-loading-module-replacement-requireensure)
 - [Replacement](#replacement)
 - [Solution for NodeJS and browser environment](#solution-for-nodejs-and-browser-environment)
+- [Changes in v2.0.0](#changes-in-v200)
 - [New features since v1.0.0](#new-features-since-v100)
 - [Injection for server side Swig template](#injection-for-server-side-swig-template)
 - [Injector API](#injector-api)
@@ -37,7 +38,6 @@ When it is used for Node, it is a little bit like [app-module-path](https://www.
 	- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
 	- [value(`{string|RegExp}` requiredModule, `{*|function}` value)](#valuestringregexp-requiredmodule-function-value)
 	- [swigTemplateDir(`{string}` packageName, `{string}` dir)](#swigtemplatedirstring-packagename-string-dir)
-
 
 ### Installation
 ```
