@@ -1,6 +1,6 @@
 {
   "name": "require-injector",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Injecting and replacing require() function in both NodeJS and browser side CommonJS packing tool like Browserify.",
   "main": "index.js",
   "scripts": {
@@ -15,12 +15,12 @@
     "extend",
     "path",
     "modules",
-    "app-module-path",
     "dependency",
     "inject",
-    "IoC",
     "require",
     "browserify",
+    "browserify-plugin",
+    "browserify-tool",
     "transform",
     "webpack"
   ],

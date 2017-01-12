@@ -17,6 +17,7 @@ When it is used for Node, it is a little bit like [app-module-path](https://www.
 	- [No relative path needed in require()](#no-relative-path-needed-in-require)
 	- [Injection for Node packages](#injection-for-node-packages)
 - [Browserify example](#browserify-example)
+- [Webpack loader](#webpack-loader)
 - [Webpack-like split loading module replacement: `require.ensure()`](#webpack-like-split-loading-module-replacement-requireensure)
 - [Replacement](#replacement)
 - [Solution for NodeJS and browser environment](#solution-for-nodejs-and-browser-environment)
@@ -167,7 +168,9 @@ rj.fromDir('folderA')
 rj.fromPackage('moduleB')
 	...
 ```
-
+### Webpack loader
+Please use [transform-loader](https://github.com/webpack/transform-loader) which helps to
+use a browserify transforms as webpack-loader
 
 ### Webpack-like split loading module replacement: `require.ensure()`
 `.substitute()` works for call expression like `require.ensure()`\
