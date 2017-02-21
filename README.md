@@ -5,7 +5,8 @@
 
 Injecting and replacing require() function in both NodeJS and browser side CommonJS packing tool like Browserify.
 
-When it is used for Node, it is a little bit like [app-module-path](https://www.npmjs.com/package/app-module-path)
+When it is used for Node, it is a little bit like [app-module-path](https://www.npmjs.com/package/app-module-path),
+when it is used for browser environment JS bundle tool, it is like Webpack 2 `resolve.alias` configuration, but more flexable.
 > You may use it as a simple IoC container, which helps you decouple modules.
 
 > Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.

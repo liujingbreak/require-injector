@@ -12,6 +12,7 @@
   },
   "keywords": [
     "resolve",
+    "resolve.alias",
     "extend",
     "path",
     "modules",
