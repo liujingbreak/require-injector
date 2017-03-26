@@ -1,6 +1,4 @@
-var log = require('log4js').getLogger('require-injector.loader');
 var _ = require('lodash');
-var parseCode = require('./lib/replace-require');
 //var Path = require('path');
 
 // var injectFile = parseQuery(this.query).inject || 'webpack-inject.js';
@@ -21,9 +19,16 @@ module.exports = function(content) {
 function load(content, loader) {
 	var rj = loader.query.injector || require('.');
 	var file = loader.resourcePath;
-	//var output = Path.relative(loader._compiler.options.context || process.cwd(), file);
-	var ast = parseCode(content);
-	content = rj.injectToFile(file, content, ast);
+	var ast;
+	rj.on('ast', onAstCompiled);
+
+	content = rj.injectToFile(file, content);
+	if (ast && _.isObject(loader.query.astCache))
+		loader.query.astCache[loader.resourcePath] = ast;
+	rj.removeListener('ast', onAstCompiled);
+	function onAstCompiled(it) {
+		ast = it;
+	}
 	return content;
 }
 
@@ -31,7 +36,7 @@ function loadAsync(content, loader) {
 	try {
 		return Promise.resolve(load(content, loader));
 	} catch (e) {
-		log.error(e);
+		console.error(e);
 		return Promise.reject(e);
 	}
 }

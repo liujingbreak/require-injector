@@ -6,18 +6,17 @@
 Injecting and replacing require() function in both NodeJS and browser side CommonJS packing tool like Browserify.
 
 When it is used for Node, it is a little bit like [app-module-path](https://www.npmjs.com/package/app-module-path),
-when it is used for browser environment JS bundle tool, it is like Webpack 2 `resolve.alias` configuration, but more flexable.
+when it is used for browser environment JS bundle tool, it is like Webpack 2 `resolve.alias` configuration, but more fine-grained.
 > You may use it as a simple IoC container, which helps you decouple modules.
 
 > Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
 
-- [require-injector](#require-injector)
 - [Installation](#installation)
 - [Node project example](#node-project-example)
 	- [Injection for local files](#injection-for-local-files)
 	- [No relative path needed in require()](#no-relative-path-needed-in-require)
 	- [Injection for Node packages](#injection-for-node-packages)
-- [Browserify example](#browserify-example)
+- [Browserify transform](#browserify-transform)
 - [Webpack loader](#webpack-loader)
 - [Webpack-like split loading module replacement: `require.ensure()`](#webpack-like-split-loading-module-replacement-requireensure)
 - [Replacement](#replacement)
@@ -27,19 +26,29 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 - [Injection for server side Swig template](#injection-for-server-side-swig-template)
 - [Injector API](#injector-api)
 	- [require('require-injector')( `{object}` opts )](#requirerequire-injector-object-opts-)
+		- [Parameters](#parameters)
 	- [fromPackage( `{string|array}` nodePackageName, `{function}` resolve, `{object}` opts)](#frompackage-stringarray-nodepackagename-function-resolve-object-opts)
+		- [Parameters](#parameters-1)
 	- [fromDir( `{string|array}` directory)](#fromdir-stringarray-directory)
+		- [Parameters](#parameters-2)
 	- [transform(filePath)](#transformfilepath)
 	- [injectToFile(`{string}` filePath, `{string}` code, `{object}` ast)](#injecttofilestring-filepath-string-code-object-ast)
+		- [Parameters](#parameters-3)
 	- [cleanup()](#cleanup)
 - [Events](#events)
 	- ["inject" event](#inject-event)
 	- ["replace" event](#replace-event)
+	- ["ast" event](#ast-event)
 - [FactoryMap API](#factorymap-api)
 	- [substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
+		- [Parameters](#parameters-4)
 	- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
+		- [Parameters](#parameters-5)
+	- [replaceCode(`{string|RegExp}` moduleName, `{string | function}` jsCode)](#replacecodestringregexp-modulename-string--function-jscode)
 	- [value(`{string|RegExp}` requiredModule, `{*|function}` value)](#valuestringregexp-requiredmodule-function-value)
+		- [Parameters](#parameters-6)
 	- [swigTemplateDir(`{string}` packageName, `{string}` dir)](#swigtemplatedirstring-packagename-string-dir)
+
 
 ### Installation
 ```
@@ -138,7 +147,7 @@ rj.fromPackage('module1', require('browser-resolve').sync)
 ```
 
 
-### Browserify example
+### Browserify transform
 If you are packing files to browser side by Browserify,
 ```js
 rj({noNode: true});
@@ -169,9 +178,31 @@ rj.fromDir('folderA')
 rj.fromPackage('moduleB')
 	...
 ```
+
 ### Webpack loader
-Please use [transform-loader](https://github.com/webpack/transform-loader) which helps to
-use a browserify transforms as webpack-loader
+> only tested on Webpack v2
+
+The whole module is a Webpack loader, you can use it in `webpack.config.js`.
+Consider it as more advanced solution for Webpack `resolve.alias` option.
+
+e.g. You want to resolve `jquery` to `zepto` only for a part of source code.
+```js
+var browserInjector = rj({noNode: true});
+browserInjector.fromDir('src/mobile').substitute('jquery', 'zepto');
+module.exports = {
+  ...
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        use: [{loader: 'require-injector', options: {injector:  browserInjector}],
+        parser: {
+          amd: false
+		  // Currently we only support CommonJS style, so you need to disable `amd` mode for safe if you don't use AMD.
+        }
+  }
+};
+```
 
 ### Webpack-like split loading module replacement: `require.ensure()`
 `.substitute()` works for call expression like `require.ensure()`\
@@ -192,7 +223,6 @@ require.ensure(['module1', 'module2'], function() {
 	....
 })
 ```
-> Webpack loader is still in progress, but if you have your own loader, this feature will be handy for you to write your own replacement function.
 
 
 ### Replacement
@@ -252,7 +282,7 @@ Supporting hierarchical directory setting.
 	```js
 	var  foobar = {"foo": "bar"};
 	```
-- Events `replace`, `inject`
+- Events `replace`, `inject`, `ast`
 
 ### Injection for server side Swig template
 We also extend injection function to resource type other than Javascript, if you are using server side Swig template engine,
@@ -332,6 +362,8 @@ Emitted when `injectToFile` is called on injector.
 ```js
 rj.on('replace', (moduleName: string, replacement: string) => {});
 ```
+#### "ast" event
+In replacement mode, requir-injector use Acorn to parse JS/JSX file into AST object, if you want to reuse this AST object, add listerner to this event
 
 ### FactoryMap API
 
@@ -372,6 +404,20 @@ Replacing a required module with a function returned value.
 
 
 _returns_ chainable FactoryMap
+
+#### replaceCode(`{string|RegExp}` moduleName, `{string | function}` jsCode)
+Arbitrary JS code replacement
+> Only work in replacement mode, not NodeJs side
+
+```js
+var rjReplace = rj({noNode: true});
+rjReplace.fromPackage([packageA...])
+	.replaceCode('foobar', JSON.stringify({foo: 'bar'}));
+```
+Which takes "`var foobar = require('foobar');"` with replaced:
+```js
+var  foobar = {"foo": "bar"};
+```
 
 #### value(`{string|RegExp}` requiredModule, `{*|function}` value)
 Replacing a required module with any object or primitive value.
