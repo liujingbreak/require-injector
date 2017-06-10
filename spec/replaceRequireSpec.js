@@ -7,6 +7,68 @@ var FactoryMap = require('../lib/factory-map').FactoryMap;
 
 describe('replace-require', ()=> {
 
+	describe('ES6 import', ()=> {
+		it('should work for import with mutiple specfics', ()=> {
+			var fm = new FactoryMap();
+			fm.value('hellow', {replacement: 'sugar'});
+			fm.replaceCode('world', 'daddy');
+			fm.substitute('foobar', '_');
+
+			var result = rr('import {ok as a, nok as b} from "hellow";', fm);
+			expect(result).toBe('var __imp1__ = sugar, aa = __imp1__["ok"], bb = __imp1__["nok"];');
+
+			result = rr('import {ok as a, nok as b} from "world";', fm);
+			expect(result).toBe('var __imp2__ = daddy, aa = __imp2__["ok"], bb = __imp2__["nok"];');
+
+			result = rr('import {ok as a, nok as b} from "_";', fm);
+			expect(result).toBe('import {ok as a, nok as b} from "_";');
+		});
+
+		it('should work for import default', ()=> {
+			var fm = new FactoryMap();
+			fm.value('hellow', {replacement: 'sugar'});
+			fm.replaceCode('world', 'daddy');
+			fm.alias('foobar', 'xxx');
+
+			var result = rr('import A from "hellow";//...', fm);
+			expect(result).toBe('var A = sugar;//...');
+
+			result = rr('import * as B from "world";', fm);
+			expect(result).toBe('var B = daddy;');
+
+			result = rr('import "foobar";', fm);
+			expect(result).toBe('import "xxx";');
+
+			result = rr('import "world";', fm);
+			expect(result).toBe('var __imp3__ = daddy;');
+		});
+
+		it('should work for alias', () => {
+			var fm = new FactoryMap();
+			fm.alias('@foo/bar', 'scrollbar');
+
+			var result = rr('import A from "@foo/bar";', fm);
+			expect(result).toBe('import A from "scrollbar";');
+
+			result = rr('import B from "@foo/bar/subdir/file.js";', fm);
+			expect(result).toBe('import B from "scrollbar/subdir/file.js";');
+		});
+	});
+
+	describe('injectToFile for import()', ()=> {
+		it('should work', ()=> {
+			rj.cleanup();
+			rj({basedir: __dirname});
+			rj.fromDir('dir1')
+			.alias('hellow', 'sugar')
+			.alias('world', 'daddy');
+
+			var file = Path.resolve(__dirname, 'dir1/testEs6Import.js');
+			var result = rj.injectToFile(file, fs.readFileSync(file, 'utf8'));
+			expect(result.indexOf('import("sugar").then(()=> {})') > 0).toBe(true);
+		});
+	});
+
 	describe('replace', ()=> {
 		it('should work for sample1', function() {
 			var fm = new FactoryMap();

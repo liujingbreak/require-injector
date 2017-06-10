@@ -11,6 +11,8 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 
 > Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
 
+
+- [require-injector](#require-injector)
 - [Installation](#installation)
 - [Node project example](#node-project-example)
 	- [Injection for local files](#injection-for-local-files)
@@ -21,8 +23,7 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 - [Webpack-like split loading module replacement: `require.ensure()`](#webpack-like-split-loading-module-replacement-requireensure)
 - [Replacement](#replacement)
 - [Solution for NodeJS and browser environment](#solution-for-nodejs-and-browser-environment)
-- [Changes in v2.0.0](#changes-in-v200)
-- [New features since v1.0.0](#new-features-since-v100)
+- [ES6 Import syntax and import async syntax](#es6-import-syntax-and-import-async-syntax)
 - [Injection for server side Swig template](#injection-for-server-side-swig-template)
 - [Injector API](#injector-api)
 	- [require('require-injector')( `{object}` opts )](#requirerequire-injector-object-opts-)
@@ -41,6 +42,7 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 	- ["ast" event](#ast-event)
 - [FactoryMap API](#factorymap-api)
 	- [substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
+	- [alias(`{string}` requiredModuleName, `{string|function}` newModule)](#aliasstring-requiredmodulename-stringfunction-newmodule)
 		- [Parameters](#parameters-4)
 	- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
 		- [Parameters](#parameters-5)
@@ -48,7 +50,6 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 	- [value(`{string|RegExp}` requiredModule, `{*|function}` value)](#valuestringregexp-requiredmodule-function-value)
 		- [Parameters](#parameters-6)
 	- [swigTemplateDir(`{string}` packageName, `{string}` dir)](#swigtemplatedirstring-packagename-string-dir)
-
 
 ### Installation
 ```
@@ -75,7 +76,6 @@ Assume you have project structure like below,
       ├─── module1/index.js, package.json, ...
       └─── module2/index.js, package.json, ...
 ```
-
 
 #### Injection for local files
 In src/dir1/some1.js, there is `require()` calling to `module1`
@@ -253,41 +253,27 @@ rjReplace.fromPackage('feature2')
 	.substitute('dependency2', 'module2');
 
 ```
-### Changes in v2.0.0
-Supporting hierarchical directory setting.
 
-### New features since v1.0.0
-- Using regular expression to match module name in `require(name)` or `require.ensure([name, ...])` (For NodeJS performance reason, only support under replacement mode `{noNode: true}`)
-- In replacement mode `{noNode: true}`, FactoryMap API `substitute()`, `value()`, `replaceCode` can take function type parameter
-	```js
-	var rjReplace = rj({noNode: true});
-	rjReplace.fromPackage([packageA...])
-		.substitute(/@company\/(\w)/, function(sourceFilePath, regexpExecResult) {
-			// regexpExecResult is result of /@company\/(\w)/.exec("packageA")
-			return '@my/' + regexpExecResult[1];
-		});
-	```
-	WHich replaces "`var foobar = require('@company/packageX')`" with
-	```js
-	var foobar = require('@my/packageX')
-	```
+### ES6 Import syntax and import async syntax
+Since v3.0.0, also support replace **import** syntax to be work with Webpack2, you no longer need to use babel to translate **import** syntax to `require()` before require-injector kicks in.
+```
+import defaultMember from "module-name";
+import * as name from "module-name";
+import { member } from "module-name";
+import { member as alias } from "module-name";
+import { member1 , member2 } from "module-name";
+import { member1 , member2 as alias2 , [...] } from "module-name";
+import defaultMember, { member [ , [...] ] } from "module-name";
+import defaultMember, * as name from "module-name";
+import "module-name";
+```
+Even asyc import syntax `import("module-name")`
 
-- New API in FactoryMap, `.replaceCode({string|RegExp} moduleName, {string | function} jsCode)` for arbitrary JS code replacement
-	```js
-	var rjReplace = rj({noNode: true});
-	rjReplace.fromPackage([packageA...])
-		.replaceCode('foobar', JSON.stringify({foo: 'bar'}));
-	```
-	Which takes "`var foobar = require('foobar');"` with replaced:
-	```js
-	var  foobar = {"foo": "bar"};
-	```
-- Events `replace`, `inject`, `ast`
+
 
 ### Injection for server side Swig template
 We also extend injection function to resource type other than Javascript, if you are using server side Swig template engine,
 this injector can work with [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
-
 
 
 ### Injector API
@@ -371,6 +357,15 @@ In replacement mode, requir-injector use Acorn to parse JS/JSX file into AST obj
 Replacing a required module with requiring another module.
 > Also support `npm://package` reference in Swig template tags `include` and `import`,
 check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
+
+#### alias(`{string}` requiredModuleName, `{string|function}` newModule)
+It works very like `substitute()` (more like **Webpack**'s `resolve.alias`), unlike `substitute()`
+it matches module name which is node package name with path, e.g.
+When injector is configured as
+```js
+rj.fromDir('.').alias('moduleA', 'moduleB');
+```
+Then the file contains `require('moduleA/foo/bar.js')` will be replaced with `require('moduleB/foo/bar.js')`, 
 
 ##### Parameters
 - `requiredModule`: the original module name which is required for, it can't be relative file path, only supports absolute path, a package name or Regular Expression.
