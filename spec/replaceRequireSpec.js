@@ -15,10 +15,10 @@ describe('replace-require', ()=> {
 			fm.substitute('foobar', '_');
 
 			var result = rr('import {ok as a, nok as b} from "hellow";', fm);
-			expect(result).toBe('var __imp1__ = sugar, aa = __imp1__["ok"], bb = __imp1__["nok"];');
+			expect(result).toBe('var __imp1__ = sugar, a = __imp1__["ok"], b = __imp1__["nok"];');
 
 			result = rr('import {ok as a, nok as b} from "world";', fm);
-			expect(result).toBe('var __imp2__ = daddy, aa = __imp2__["ok"], bb = __imp2__["nok"];');
+			expect(result).toBe('var __imp2__ = daddy, a = __imp2__["ok"], b = __imp2__["nok"];');
 
 			result = rr('import {ok as a, nok as b} from "_";', fm);
 			expect(result).toBe('import {ok as a, nok as b} from "_";');
@@ -41,6 +41,9 @@ describe('replace-require', ()=> {
 
 			result = rr('import "world";', fm);
 			expect(result).toBe('var __imp3__ = daddy;');
+
+			result = rr('import a, {b} from "world";', fm);
+			expect(result).toBe('var a = daddy, b = a["b"];');
 		});
 
 		it('should work for alias', () => {
