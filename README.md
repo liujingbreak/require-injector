@@ -185,6 +185,13 @@ The whole module is a Webpack loader, you can use it in `webpack.config.js`.
 Consider it as more advanced solution for Webpack `resolve.alias` option.
 
 e.g. You want to resolve `jquery` to `zepto` only for a part of source code.
+
+Also we provide a `css-loader` to replace "import" syntax:
+- `@import "npm://<package>/path"`
+- `@import "~<package>/path"`
+- LESS like `@import (reference | ...)` syntax
+But only work for `.substitute()`, `.alias()` to replace dependency, and `replaceCode(<package>, '')` to delete dependency. 
+
 ```js
 var browserInjector = rj({noNode: true});
 browserInjector.fromDir('src/mobile').substitute('jquery', 'zepto');
@@ -197,8 +204,18 @@ module.exports = {
         use: [{loader: 'require-injector', options: {injector:  browserInjector}],
         parser: {
           amd: false
-		  // Currently we only support CommonJS style, so you need to disable `amd` mode for safe if you don't use AMD.
+          // Currently we only support CommonJS style, so you need to disable `amd` mode for safe if you don't use AMD.
         }
+      },
+	  {
+		  test: /\.css$/,
+		  use: [
+			  ...
+			  {loader: 'require-injector/css-loader', options: {
+								injector: browserInjector
+			  }}
+		  ]
+	  }
   }
 };
 ```

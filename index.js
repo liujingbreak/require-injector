@@ -6,6 +6,7 @@ var Events = require('events');
 module.exports = Replacer;
 module.exports.getInstance = Injector.getInstance;
 module.exports.replace = Replacer.replace;
+module.exports.cssLoader = require('./css-loader');
 
 _.forOwn(Injector.prototype, function(func, prop) {
 	if (_.isFunction(func)) {
