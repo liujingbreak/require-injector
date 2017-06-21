@@ -48,6 +48,7 @@ describe('replace-require', ()=> {
 
 		it('should work for alias', () => {
 			var fm = new FactoryMap();
+			fm.alias('@foo/bar2', 'scrollbar2');
 			fm.alias('@foo/bar', 'scrollbar');
 
 			var result = rr('import A from "@foo/bar";', fm);
@@ -55,6 +56,9 @@ describe('replace-require', ()=> {
 
 			result = rr('import B from "@foo/bar/subdir/file.js";', fm);
 			expect(result).toBe('import B from "scrollbar/subdir/file.js";');
+
+			result = rr('import A from "ok";', fm);
+			expect(result).toBe('import A from "ok";');
 		});
 	});
 

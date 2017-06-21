@@ -42,8 +42,7 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 	- ["ast" event](#ast-event)
 - [FactoryMap API](#factorymap-api)
 	- [substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
-	- [alias(`{string}` requiredModuleName, `{string|function}` newModule)](#aliasstring-requiredmodulename-stringfunction-newmodule)
-		- [Parameters](#parameters-4)
+	- [alias(`{string}` requiredModuleName, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
 	- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
 		- [Parameters](#parameters-5)
 	- [replaceCode(`{string|RegExp}` moduleName, `{string | function}` jsCode)](#replacecodestringregexp-modulename-string--function-jscode)
@@ -186,6 +185,13 @@ The whole module is a Webpack loader, you can use it in `webpack.config.js`.
 Consider it as more advanced solution for Webpack `resolve.alias` option.
 
 e.g. You want to resolve `jquery` to `zepto` only for a part of source code.
+
+Also we provide a `css-loader` to replace "import" syntax:
+- `@import "npm://<package>/path"`
+- `@import "~<package>/path"`
+- LESS like `@import (reference | ...)` syntax
+But only work for `.substitute()`, `.alias()` to replace dependency, and `replaceCode(<package>, '')` to delete dependency. 
+
 ```js
 var browserInjector = rj({noNode: true});
 browserInjector.fromDir('src/mobile').substitute('jquery', 'zepto');
@@ -198,8 +204,18 @@ module.exports = {
         use: [{loader: 'require-injector', options: {injector:  browserInjector}],
         parser: {
           amd: false
-		  // Currently we only support CommonJS style, so you need to disable `amd` mode for safe if you don't use AMD.
+          // Currently we only support CommonJS style, so you need to disable `amd` mode for safe if you don't use AMD.
         }
+      },
+	  {
+		  test: /\.css$/,
+		  use: [
+			  ...
+			  {loader: 'require-injector/css-loader', options: {
+								injector: browserInjector
+			  }}
+		  ]
+	  }
   }
 };
 ```
@@ -255,7 +271,7 @@ rjReplace.fromPackage('feature2')
 ```
 
 ### ES6 Import syntax and import async syntax
-Since v3.0.0, also support replace **import** syntax to be work with Webpack2, you no longer need to use babel to translate **import** syntax to `require()` before require-injector kicks in.
+Since v3.0.0, it also supports replacing **import** syntax to work with Webpack2, you no longer need to use babel to translate **import** syntax to `require()` before require-injector kicks in, which is also for enabling Webpack tree-shaking function.
 ```
 import defaultMember from "module-name";
 import * as name from "module-name";
@@ -354,18 +370,24 @@ In replacement mode, requir-injector use Acorn to parse JS/JSX file into AST obj
 ### FactoryMap API
 
 #### substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)
+Or
+`alias(requiredModule, newModule)`
+
 Replacing a required module with requiring another module.
 > Also support `npm://package` reference in Swig template tags `include` and `import`,
 check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/package/swig-package-tmpl-loader#injection)
 
-#### alias(`{string}` requiredModuleName, `{string|function}` newModule)
-It works very like `substitute()` (more like **Webpack**'s `resolve.alias`), unlike `substitute()`
-it matches module name which is node package name with path, e.g.
+> It works very like **Webpack**'s `resolve.alias`,
+it also matches module name which is consist of node package name and specific path
+
+e.g.
 When injector is configured as
 ```js
 rj.fromDir('.').alias('moduleA', 'moduleB');
 ```
-Then the file contains `require('moduleA/foo/bar.js')` will be replaced with `require('moduleB/foo/bar.js')`, 
+Then the file contains `require('moduleA/foo/bar.js')` will be replaced with `require('moduleB/foo/bar.js')`
+
+
 
 ##### Parameters
 - `requiredModule`: the original module name which is required for, it can't be relative file path, only supports absolute path, a package name or Regular Expression.
