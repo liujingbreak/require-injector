@@ -104,6 +104,18 @@ describe('replace-require', ()=> {
 			expect(result).toBe(';obj.require("a");');
 		});
 
+		it('should work for webpack inline load', function() {
+			var fm = new FactoryMap();
+			fm.value('hellow', {replacement: '__'});
+			fm.alias('world', '__');
+
+			var result = rr('require("style-loader!css-loader?modules!hellow");', fm);
+			expect(result).toBe('__;');
+
+			result = rr('import "style-loader!css-loader?modules!world";', fm);
+			expect(result).toBe('import "style-loader!css-loader?modules!__";');
+		});
+
 		it('should work for sample3 with .value() function factory', function() {
 			var valueFactory = {
 				replacement: function(file, matchRegex) {
