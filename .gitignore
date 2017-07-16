@@ -8,3 +8,5 @@ dist
 /spec/node_modules/require-injector/*
 /spec/link
 .vscode
+yarn-*
+yarn.*
