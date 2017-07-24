@@ -1,6 +1,6 @@
 {
   "name": "require-injector",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Resolve and replacing require() function in both NodeJS and browser side CommonJS packing tool like Webpack and Browserify.",
   "main": "index.js",
   "loader": "webpack-loader",
@@ -56,5 +56,8 @@
     "browserify": "^13.0.1",
     "jasmine": "^2.4.1",
     "shelljs": "^0.6.0"
+  },
+  "peerDependencies": {
+    "log4js": "*"
   }
 }
