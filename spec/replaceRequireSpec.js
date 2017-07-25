@@ -111,6 +111,8 @@ describe('replace-require', ()=> {
 
 			var result = rr('require("style-loader!css-loader?modules!hellow");', fm);
 			expect(result).toBe('__;');
+			result = rr('require("style-loader!css-loader?modules!world");', fm);
+			expect(result).toBe('require("style-loader!css-loader?modules!__");');
 
 			result = rr('import "style-loader!css-loader?modules!world";', fm);
 			expect(result).toBe('import "style-loader!css-loader?modules!__";');
