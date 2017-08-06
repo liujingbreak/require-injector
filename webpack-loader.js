@@ -10,10 +10,13 @@ var _ = require('lodash');
 module.exports = function(content) {
 	var callback = this.async();
 	if (!callback)
-		return load(content, this);
+		throw new Error('require-injector only supports async loader');
 	loadAsync(content, this)
-	.then(result => callback(null, result))
-	.catch(err => callback(err));
+	.then(result => callback(null, result.content, null, result.ast))
+	.catch(err => {
+		console.error(err);
+		callback(err);
+	});
 };
 
 function load(content, loader) {
@@ -29,7 +32,10 @@ function load(content, loader) {
 	function onAstCompiled(it) {
 		ast = it;
 	}
-	return content;
+	return Promise.resolve({
+		content: content,
+		ast: ast
+	});
 }
 
 function loadAsync(content, loader) {
