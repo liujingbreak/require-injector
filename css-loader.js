@@ -10,13 +10,13 @@ var rj = require('.');
  * This loader replaces all "import ... npm://"s with webpack's "import ... ~" style,
  * and works with require-injector to replace package.
  */
-module.exports = function(content) {
+module.exports = function(content, sourcemap) {
 	var callback = this.async();
 	if (!callback)
 		throw new Error('Must be used as async loader');
 	var opts = lu.getOptions(this);
 	loadAsync(content, this, opts)
-	.then(result => callback(null, result))
+	.then(result => callback(null, result, sourcemap))
 	.catch(err => {
 		this.emitError(err);
 		callback(err);
