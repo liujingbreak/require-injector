@@ -7,19 +7,19 @@ var _ = require('lodash');
 // 	injectFile += './';
 // require(injectFile);
 
-module.exports = function(content) {
+module.exports = function(content, sourcemap, ast) {
 	var callback = this.async();
 	if (!callback)
 		throw new Error('require-injector only supports async loader');
-	loadAsync(content, this)
-	.then(result => callback(null, result.content, null, result.ast))
+	loadAsync(content, ast, this)
+	.then(result => callback(null, result.content, sourcemap, result.ast))
 	.catch(err => {
 		console.error(err);
 		callback(err);
 	});
 };
 
-function load(content, loader) {
+function load(content, passedAst, loader) {
 	var rj = loader.query.injector || require('.');
 	var file = loader.resourcePath;
 	var ast;
@@ -38,9 +38,9 @@ function load(content, loader) {
 	});
 }
 
-function loadAsync(content, loader) {
+function loadAsync(content, ast, loader) {
 	try {
-		return Promise.resolve(load(content, loader));
+		return Promise.resolve(load(content, ast, loader));
 	} catch (e) {
 		console.error(e);
 		return Promise.reject(e);
