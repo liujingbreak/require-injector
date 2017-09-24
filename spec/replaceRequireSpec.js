@@ -6,7 +6,6 @@ var _ = require('lodash');
 var FactoryMap = require('../lib/factory-map').FactoryMap;
 
 describe('replace-require', ()=> {
-
 	describe('ES6 import', ()=> {
 		it('should work for import with mutiple specfics', ()=> {
 			var fm = new FactoryMap();
