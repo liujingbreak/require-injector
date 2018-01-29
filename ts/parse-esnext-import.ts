@@ -1,14 +1,12 @@
-var _ = require('lodash');
-var EOL = require('os').EOL;
+import * as _ from 'lodash';
+// var {EOL} = require('os');
 
 var seq = 0;
 
-exports.parse = parse;
-
-exports.toAssignment = function(parsedInfo, valueStr) {
+export function toAssignment(parsedInfo: ParseInfo, valueStr: string): string {
 	var dec = 'var ';
 	var i = 0;
-	var importsVarName;
+	var importsVarName: string;
 	if (parsedInfo.defaultVars.length === 0) {
 		importsVarName = '__imp' + uid() + '__';
 		dec += importsVarName + ' = ' + valueStr;
@@ -32,11 +30,17 @@ exports.toAssignment = function(parsedInfo, valueStr) {
 	});
 	dec += ';';
 	return dec;
-};
+}
 
-function parse(ast) {
-	var res = {vars: {}, from: null, defaultVars: []};
-	ast.specifiers.forEach(function(speci) {
+export interface ParseInfo {
+	vars: {[k: string]: string};
+	defaultVars: string[];
+	from: string;
+}
+
+export function parse(ast: any): ParseInfo{
+	var res: ParseInfo = {vars: {}, from: null, defaultVars: []};
+	ast.specifiers.forEach(function(speci: any) {
 		var imported = _.get(speci, 'imported.name');
 		if (!imported)
 			res.defaultVars.push(speci.local.name);

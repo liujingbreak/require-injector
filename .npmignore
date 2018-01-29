@@ -2,3 +2,4 @@ spec
 .vscode
 yarn-*
 yarn.*
+/ts/

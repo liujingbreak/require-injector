@@ -1,0 +1,6 @@
+declare function translate(key: string): string;
+
+translate('text');
+
+import * as _ from 'lodash';
+export * from 'lodash';
