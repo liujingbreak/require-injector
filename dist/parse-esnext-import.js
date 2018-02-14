@@ -34,8 +34,23 @@ function toAssignment(parsedInfo, valueStr) {
     return dec;
 }
 exports.toAssignment = toAssignment;
+class ParseInfo {
+    constructor() {
+        this.vars = {};
+        this.defaultVars = [];
+        this.from = null;
+    }
+}
+exports.ParseInfo = ParseInfo;
+class ParseExportInfo {
+    constructor() {
+        this.exported = {}; // Empty means ExportAllDeclaration "export * from ..."
+        this.from = null;
+    }
+}
+exports.ParseExportInfo = ParseExportInfo;
 function parse(ast) {
-    var res = { vars: {}, from: null, defaultVars: [] };
+    var res = new ParseInfo();
     ast.specifiers.forEach(function (speci) {
         var imported = _.get(speci, 'imported.name');
         if (!imported)
@@ -47,6 +62,16 @@ function parse(ast) {
     return res;
 }
 exports.parse = parse;
+function parseExport(ast) {
+    var res = new ParseExportInfo();
+    ast.specifiers.forEach(function (speci) {
+        var name = _.get(speci, 'exported.name');
+        res.exported[name] = speci.local.name;
+    });
+    res.from = ast.source.value;
+    return res;
+}
+exports.parseExport = parseExport;
 function uid() {
     return ++seq;
 }

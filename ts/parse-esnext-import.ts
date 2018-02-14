@@ -32,20 +32,35 @@ export function toAssignment(parsedInfo: ParseInfo, valueStr: string): string {
 	return dec;
 }
 
-export interface ParseInfo {
-	vars: {[k: string]: string};
-	defaultVars: string[];
-	from: string;
+export class ParseInfo {
+	vars: {[k: string]: string} = {};
+	defaultVars: string[] = [];
+	from: string = null;
+}
+
+export class ParseExportInfo {
+	exported: {[name: string]: string} = {}; // Empty means ExportAllDeclaration "export * from ..."
+	from: string = null;
 }
 
 export function parse(ast: any): ParseInfo{
-	var res: ParseInfo = {vars: {}, from: null, defaultVars: []};
+	var res: ParseInfo = new ParseInfo();
 	ast.specifiers.forEach(function(speci: any) {
 		var imported = _.get(speci, 'imported.name');
 		if (!imported)
 			res.defaultVars.push(speci.local.name);
 		else
 			res.vars[speci.local.name] = imported;
+	});
+	res.from = ast.source.value;
+	return res;
+}
+
+export function parseExport(ast: any): ParseExportInfo {
+	var res: ParseExportInfo = new ParseExportInfo();
+	ast.specifiers.forEach(function(speci: any) {
+		var name = _.get(speci, 'exported.name');
+		res.exported[name] = speci.local.name;
 	});
 	res.from = ast.source.value;
 	return res;

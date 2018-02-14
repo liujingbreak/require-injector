@@ -22,4 +22,7 @@ describe("Typescript AST", () => {
         }
     });
 });
+exports.default = {
+    ok: 1
+};
 //# sourceMappingURL=ts-parserSpec.js.map
