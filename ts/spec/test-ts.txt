@@ -1,6 +1,8 @@
 declare function translate(key: string): string;
 
 translate('text');
-
+alert(__api);
+import C, {a as A, b as B} from 'MODULE';
+import api from '__api';
 import * as _ from 'lodash';
 export * from 'lodash';
