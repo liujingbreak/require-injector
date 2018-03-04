@@ -5,4 +5,6 @@ alert(__api);
 import C, {a as A, b as B} from 'MODULE';
 import api from '__api';
 import * as _ from 'lodash';
+var a = require('__api');
+import('asyncModule');
 export * from 'lodash';

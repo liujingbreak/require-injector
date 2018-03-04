@@ -24,6 +24,7 @@
     "dependency",
     "inject",
     "require",
+    "typescript",
     "browserify",
     "browserify-plugin",
     "browserify-tool",

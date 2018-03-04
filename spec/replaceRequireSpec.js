@@ -3,7 +3,7 @@ var rj = require('..');
 var Path = require('path');
 var fs = require('fs');
 var _ = require('lodash');
-var FactoryMap = require('../lib/factory-map').FactoryMap;
+var {FactoryMap} = require('../dist/factory-map');
 
 describe('replace-require', ()=> {
 	describe('ES6 import', ()=> {
