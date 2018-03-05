@@ -59,12 +59,34 @@ function traverseTsAst(ast: ts.Node, srcfile: ts.SourceFile, parseInfos: ParseIn
 				});
 			}
 		}
-		// parseInfo.
 		parseInfos.push(parseInfo);
+		return;
+	} else if (ast.kind === ts.SyntaxKind.CallExpression) {
+		let node = ast as ts.CallExpression;
+		if (node.expression.kind === ts.SyntaxKind.Identifier &&
+			(node.expression as ts.Identifier).text === 'require' &&
+			node.arguments[0].kind === ts.SyntaxKind.StringLiteral) {
+			console.log('Found require() ', node.arguments.map(arg => (arg as any).text));
+			return;
+		} else if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+			console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
+			return;
+		} else if (node.expression.kind === ts.SyntaxKind.PropertyAccessExpression) {
+			let left = (node.expression as ts.PropertyAccessExpression).expression;
+			let right = (node.expression as ts.PropertyAccessExpression).name;
+			if (left.kind === ts.SyntaxKind.Identifier && (left as ts.Identifier).text === 'require' &&
+			right.kind === ts.SyntaxKind.Identifier && (right as ts.Identifier).text === 'ensure') {
+				console.log('Found require.ensure()', node.arguments.map(arg => (arg as any).text));
+			}
+		}
+		// console.log('#', getTextOf(node.expression, srcfile), (node.expression as ts.Identifier).text);
 	}
-	// let count = 0;
-	// ast.forEachChild((sub: ts.Node) => {
-	// 	traverseTsAst(sub, parseInfos, source, level + 1);
-	// 	count++;
-	// });
+	ast.forEachChild((sub: ts.Node) => {
+		traverseTsAst(sub, srcfile, parseInfos, level + 1);
+	});
+}
+
+
+function getTextOf(ast: ts.Node, srcfile: ts.SourceFile): string {
+	return srcfile.text.substring(ast.pos, ast.end);
 }

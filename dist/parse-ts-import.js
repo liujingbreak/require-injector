@@ -60,13 +60,36 @@ function traverseTsAst(ast, srcfile, parseInfos, level = 0) {
                 });
             }
         }
-        // parseInfo.
         parseInfos.push(parseInfo);
+        return;
     }
-    // let count = 0;
-    // ast.forEachChild((sub: ts.Node) => {
-    // 	traverseTsAst(sub, parseInfos, source, level + 1);
-    // 	count++;
-    // });
+    else if (ast.kind === ts.SyntaxKind.CallExpression) {
+        let node = ast;
+        if (node.expression.kind === ts.SyntaxKind.Identifier &&
+            node.expression.text === 'require' &&
+            node.arguments[0].kind === ts.SyntaxKind.StringLiteral) {
+            console.log('Found require() ', node.arguments.map(arg => arg.text));
+            return;
+        }
+        else if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+            console.log('Found import() ', node.arguments.map(arg => arg.text));
+            return;
+        }
+        else if (node.expression.kind === ts.SyntaxKind.PropertyAccessExpression) {
+            let left = node.expression.expression;
+            let right = node.expression.name;
+            if (left.kind === ts.SyntaxKind.Identifier && left.text === 'require' &&
+                right.kind === ts.SyntaxKind.Identifier && right.text === 'ensure') {
+                console.log('Found require.ensure()', node.arguments.map(arg => arg.text));
+            }
+        }
+        // console.log('#', getTextOf(node.expression, srcfile), (node.expression as ts.Identifier).text);
+    }
+    ast.forEachChild((sub) => {
+        traverseTsAst(sub, srcfile, parseInfos, level + 1);
+    });
+}
+function getTextOf(ast, srcfile) {
+    return srcfile.text.substring(ast.pos, ast.end);
 }
 //# sourceMappingURL=parse-ts-import.js.map
