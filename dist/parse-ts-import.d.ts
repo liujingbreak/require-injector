@@ -1,4 +1,11 @@
-import { ParseInfo } from './parse-esnext-import';
+import { FactoryMap } from './factory-map';
 export declare function parseTs(file: string): void;
-export declare function replace(code: string, factoryMaps: any, fileParam: any): string;
-export declare function parseTsSource(source: string): ParseInfo[];
+export declare class TypescriptParser {
+    esReplacer: any;
+    constructor(esReplacer?: any);
+    private _addPatch;
+    private _addPatch4Import;
+    replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, fileParam: any): string;
+    parseTsSource(source: string): void;
+    private traverseTsAst(ast, srcfile, level?);
+}

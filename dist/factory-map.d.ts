@@ -11,6 +11,13 @@ export interface FactorySettingObj {
     subPath?: string;
     replacement?: (file: string, execResult: RegExpExecArray) => any | string;
 }
+/** // TODO */
+export declare enum ReplaceType {
+    rq = 0,
+    ima = 1,
+    imp = 2,
+    rs = 3,
+}
 export interface RegexSetting extends FactorySettingObj {
     regex: RegExp;
 }
@@ -18,7 +25,7 @@ export declare type FactorySetting = FactorySettingObj;
 export interface FactoryFunc {
     (sourceFilePath: string, regexpExecResult: RegExpExecArray): string;
 }
-export declare class FactoryMapObj {
+export declare class FactoryMap {
     config: Config;
     requireMap: {
         [k: string]: FactorySettingObj;
@@ -42,8 +49,15 @@ export declare class FactoryMapObj {
     getInjected(factorySetting: FactorySetting, calleeModuleId: string, calleeModule: any, requireCall: (m: any, file: string) => FactorySetting): FactorySetting;
     addResolvePath(dir: string): this;
 }
-export declare var FactoryMap: typeof FactoryMapObj;
+export interface FactoryMapInterf {
+    factory(name: string | RegExp, RegExp: string | FactoryFunc): FactoryMapInterf;
+    substitute(requiredModule: string | RegExp, newModule: string | FactoryFunc): FactoryMapInterf;
+    value(requiredModule: string | RegExp, newModule: any | FactoryFunc): FactoryMapInterf;
+    swigTemplateDir: (requiredModule: string, dir: string) => FactoryMapInterf;
+    replaceCode: (requiredModule: string | RegExp, newModule: string | FactoryFunc) => FactoryMapInterf;
+    alias: (requiredModule: string | RegExp, newModule: string | FactoryFunc) => FactoryMapInterf;
+}
 export declare class FactoryMapCollection {
-    maps: FactoryMapObj[];
-    constructor(maps: FactoryMapObj[]);
+    maps: FactoryMap[];
+    constructor(maps: FactoryMap[]);
 }

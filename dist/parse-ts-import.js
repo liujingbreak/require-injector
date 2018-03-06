@@ -5,6 +5,7 @@ const fs = require("fs");
 const Path = require("path");
 const _ = require("lodash");
 const parse_esnext_import_1 = require("./parse-esnext-import");
+var patchText = require('../lib/patch-text.js');
 function parseTs(file) {
     // let source = fs.readFileSync(Path.resolve(__dirname, '../../ts/spec/test-ts.txt'), 'utf8');
     let source = fs.readFileSync(Path.resolve(file), 'utf8');
@@ -27,68 +28,98 @@ function parseTs(file) {
     }
 }
 exports.parseTs = parseTs;
-function replace(code, factoryMaps, fileParam) {
-    parseTsSource(code);
-    return '';
-}
-exports.replace = replace;
-function parseTsSource(source) {
-    let srcfile = ts.createSourceFile('test-ts.ts', source, ts.ScriptTarget.ES2015);
-    let parseInfos = [];
-    for (let stm of srcfile.statements) {
-        traverseTsAst(stm, srcfile, parseInfos);
+class TypescriptParser {
+    constructor(esReplacer = null) {
+        this.esReplacer = esReplacer;
     }
-    return parseInfos;
-}
-exports.parseTsSource = parseTsSource;
-function traverseTsAst(ast, srcfile, parseInfos, level = 0) {
-    if (ast.kind === ts.SyntaxKind.ImportDeclaration) {
-        let node = ast;
-        console.log('found import statement:', ast.getText(srcfile));
-        let parseInfo = new parse_esnext_import_1.ParseInfo();
-        parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.pos, node.moduleSpecifier.end))[1];
-        if (node.importClause.name) {
-            parseInfo.defaultVars.push(node.importClause.name.text);
+    replace(code, factoryMaps, fileParam) {
+        let patches = [];
+        let self = this;
+        factoryMaps = [].concat(factoryMaps);
+        this._addPatch = function (start, end, moduleName, replaceType) {
+            if (!this.esReplacer)
+                return;
+            this.esReplacer.addPatch(this.patches, start, end, moduleName, replaceType, factoryMaps, fileParam);
+        };
+        this._addPatch4Import = function (allStart, allEnd, start, end, moduleName, info) {
+            _.some(factoryMaps, factoryMap => {
+                var setting = factoryMap.matchRequire(info.from);
+                if (setting) {
+                    var replacement = factoryMap.getReplacement(setting, 'imp', fileParam, info);
+                    if (replacement != null) {
+                        patches.push({
+                            start: replacement.replaceAll ? allStart : start,
+                            end: replacement.replaceAll ? allEnd : end,
+                            replacement: replacement.code
+                        });
+                        self.esReplacer.emit('replace', info.from, replacement.code);
+                    }
+                    return true;
+                }
+                return false;
+            });
+        };
+        this.parseTsSource(code);
+        return patchText(code, patches);
+    }
+    parseTsSource(source) {
+        let srcfile = ts.createSourceFile('test-ts.ts', source, ts.ScriptTarget.ES2015);
+        for (let stm of srcfile.statements) {
+            this.traverseTsAst(stm, srcfile);
         }
-        var nb = node.importClause.namedBindings;
-        if (nb) {
-            if (nb.kind === ts.SyntaxKind.NamespaceImport)
-                parseInfo.vars[nb.name.text] = '*';
-            else {
-                nb.elements.forEach(element => {
-                    parseInfo.vars[element.name.text] = element.propertyName ? element.propertyName.text : element.name.text;
-                });
+    }
+    traverseTsAst(ast, srcfile, level = 0) {
+        if (ast.kind === ts.SyntaxKind.ImportDeclaration) {
+            let node = ast;
+            console.log('found import statement:', ast.getText(srcfile));
+            let parseInfo = new parse_esnext_import_1.ParseInfo();
+            parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.pos, node.moduleSpecifier.end))[1];
+            if (node.importClause.name) {
+                parseInfo.defaultVars.push(node.importClause.name.text);
             }
-        }
-        parseInfos.push(parseInfo);
-        return;
-    }
-    else if (ast.kind === ts.SyntaxKind.CallExpression) {
-        let node = ast;
-        if (node.expression.kind === ts.SyntaxKind.Identifier &&
-            node.expression.text === 'require' &&
-            node.arguments[0].kind === ts.SyntaxKind.StringLiteral) {
-            console.log('Found require() ', node.arguments.map(arg => arg.text));
+            var nb = node.importClause.namedBindings;
+            if (nb) {
+                if (nb.kind === ts.SyntaxKind.NamespaceImport)
+                    parseInfo.vars[nb.name.text] = '*';
+                else {
+                    nb.elements.forEach(element => {
+                        parseInfo.vars[element.name.text] = element.propertyName ? element.propertyName.text : element.name.text;
+                    });
+                }
+            }
+            this._addPatch4Import(node.pos, node.end, node.moduleSpecifier.pos, node.moduleSpecifier.end, parseInfo.from, parseInfo);
+            // parseInfos.push(parseInfo);
             return;
         }
-        else if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-            console.log('Found import() ', node.arguments.map(arg => arg.text));
-            return;
-        }
-        else if (node.expression.kind === ts.SyntaxKind.PropertyAccessExpression) {
-            let left = node.expression.expression;
-            let right = node.expression.name;
-            if (left.kind === ts.SyntaxKind.Identifier && left.text === 'require' &&
-                right.kind === ts.SyntaxKind.Identifier && right.text === 'ensure') {
-                console.log('Found require.ensure()', node.arguments.map(arg => arg.text));
+        else if (ast.kind === ts.SyntaxKind.CallExpression) {
+            let node = ast;
+            if (node.expression.kind === ts.SyntaxKind.Identifier &&
+                node.expression.text === 'require' &&
+                node.arguments[0].kind === ts.SyntaxKind.StringLiteral) {
+                console.log('Found', getTextOf(node, srcfile));
+                this._addPatch(node.pos, node.end, node.arguments[0].text, 'rq');
+                return;
+            }
+            else if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+                console.log('Found import() ', node.arguments.map(arg => arg.text));
+                this._addPatch(node.pos, node.end, node.arguments[0].text, 'ima');
+                return;
+            }
+            else if (node.expression.kind === ts.SyntaxKind.PropertyAccessExpression) {
+                let left = node.expression.expression;
+                let right = node.expression.name;
+                if (left.kind === ts.SyntaxKind.Identifier && left.text === 'require' &&
+                    right.kind === ts.SyntaxKind.Identifier && right.text === 'ensure') {
+                    console.log('Found require.ensure()', node.arguments.map(arg => arg.text));
+                }
             }
         }
-        // console.log('#', getTextOf(node.expression, srcfile), (node.expression as ts.Identifier).text);
+        ast.forEachChild((sub) => {
+            this.traverseTsAst(sub, srcfile, level + 1);
+        });
     }
-    ast.forEachChild((sub) => {
-        traverseTsAst(sub, srcfile, parseInfos, level + 1);
-    });
 }
+exports.TypescriptParser = TypescriptParser;
 function getTextOf(ast, srcfile) {
     return srcfile.text.substring(ast.pos, ast.end);
 }

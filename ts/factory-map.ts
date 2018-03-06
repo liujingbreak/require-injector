@@ -16,6 +16,11 @@ export interface FactorySettingObj {
 	replacement?: (file: string, execResult: RegExpExecArray) => any | string;
 }
 
+/** // TODO */
+export enum ReplaceType {
+	rq= 0, ima, imp, rs
+}
+
 export interface RegexSetting extends FactorySettingObj{
 	regex: RegExp;
 }
@@ -38,16 +43,8 @@ interface InjectActions {
 export interface FactoryFunc{
 	(sourceFilePath: string, regexpExecResult: RegExpExecArray): string
 }
-// interface FactoryMapInterf {
-// 	factory: (name: string | RegExp, RegExp : string| FactoryFunc) => FactoryMapInterf;
-// 	substitute: (requiredModule: string | RegExp, newModule: string| FactoryFunc) => FactoryMapInterf;
-// 	value: (requiredModule: string | RegExp, newModule: any| FactoryFunc) => FactoryMapInterf;
-// 	swigTemplateDir: (requiredModule: string, dir: string) => FactoryMapInterf;
-// 	replaceCode: (requiredModule: string | RegExp, newModule: string| FactoryFunc) => FactoryMapInterf;
-// 	alias: (requiredModule: string | RegExp, newModule: string| FactoryFunc) => FactoryMapInterf;
-// }
 
-export class FactoryMapObj {
+export class FactoryMap {
 	config: Config;
 	requireMap: {[k: string]: FactorySettingObj} = {};
 	beginWithSearch: any[] = []; // Binary search
@@ -140,10 +137,8 @@ export class FactoryMapObj {
 	}
 }
 
-export var FactoryMap = FactoryMapObj;
-
 let replaceActions: ReplaceActions = {
-	factory(this: FactoryMapObj, setting: FactorySetting, type: string, fileParam: string, execResult: RegExpExecArray,
+	factory(this: FactoryMap, setting: FactorySetting, type: string, fileParam: string, execResult: RegExpExecArray,
 		astInfo: ParseInfo, prefix?: any, subPath?: string) {
 		var sourcePath = JSON.stringify(this.config.enableFactoryParamFile ? fileParam : '');
 		var execFactory = '(' + setting.toString() + ')(' + sourcePath +
@@ -160,7 +155,7 @@ let replaceActions: ReplaceActions = {
 		return null;
 	},
 
-	substitute(this: FactoryMapObj, setting: FactorySetting, type: string, fileParam: string, execResult: RegExpExecArray,
+	substitute(this: FactoryMap, setting: FactorySetting, type: string, fileParam: string, execResult: RegExpExecArray,
 		astInfo: ParseInfo, prefix?: any, subPath?: string) {
 		if (type === 'rs') { // for require.ensure
 			if (_.isFunction(setting))
@@ -184,7 +179,7 @@ let replaceActions: ReplaceActions = {
 		}
 	},
 
-	value(this: FactoryMapObj, setting: FactorySetting, type: string, fileParam: string, execResult: RegExpExecArray,
+	value(this: FactoryMap, setting: FactorySetting, type: string, fileParam: string, execResult: RegExpExecArray,
 		astInfo: ParseInfo, prefix?: any, subPath?: string) {
 		if (type === 'rq' || type === 'imp' || type === 'ima') {
 			var replaced;
@@ -233,6 +228,15 @@ let replaceActions: ReplaceActions = {
 	// }
 }
 
+export interface FactoryMapInterf {
+	factory(name: string | RegExp, RegExp : string| FactoryFunc): FactoryMapInterf;
+	substitute(requiredModule: string | RegExp, newModule: string| FactoryFunc): FactoryMapInterf;
+	value(requiredModule: string | RegExp, newModule: any| FactoryFunc): FactoryMapInterf;
+	swigTemplateDir: (requiredModule: string, dir: string) => FactoryMapInterf;
+	replaceCode: (requiredModule: string | RegExp, newModule: string| FactoryFunc) => FactoryMapInterf;
+	alias: (requiredModule: string | RegExp, newModule: string| FactoryFunc) => FactoryMapInterf;
+}
+
 let injectActions: InjectActions = {
 	factory: function(setting: FactorySetting,
 		calleeModuleId: string,
@@ -279,14 +283,14 @@ let injectActions: InjectActions = {
 	}
 }
 
-FactoryMapObj.prototype.getInjector = FactoryMapObj.prototype.matchRequire;
+FactoryMap.prototype.getInjector = FactoryMap.prototype.matchRequire;
 
-FactoryMapObj.METHODS.forEach(function(mName) {
+FactoryMap.METHODS.forEach(function(mName) {
 	/**
 	 * @param name {string | RegExp}
 	 */
-	let prot: any = FactoryMapObj.prototype;
-	prot[mName] = function(this: FactoryMapObj, name: string | RegExp, value: any) {
+	let prot: any = FactoryMap.prototype;
+	prot[mName] = function(this: FactoryMap, name: string | RegExp, value: any) {
 		if (_.isRegExp(name)) {
 			this.regexSettings.push( {
 				regex: name,
@@ -307,17 +311,17 @@ FactoryMapObj.METHODS.forEach(function(mName) {
 	};
 });
 
-(FactoryMapObj.prototype as any).alias = (FactoryMapObj.prototype as any).substitute;
+(FactoryMap.prototype as any).alias = (FactoryMap.prototype as any).substitute;
 
 export class FactoryMapCollection {
-	maps: FactoryMapObj[];
-	constructor(maps: FactoryMapObj[]) {
+	maps: FactoryMap[];
+	constructor(maps: FactoryMap[]) {
 		this.maps = maps;
 	}
 	// [method: string]: () => FactoryMapCollection;
 }
 
-FactoryMapObj.METHODS.forEach(function(method) {
+FactoryMap.METHODS.forEach(function(method) {
 	(FactoryMapCollection.prototype as any)[method] = function(this: FactoryMapCollection) {
 		this.maps.forEach((factoryMap: any) => {
 			factoryMap[method].apply(factoryMap, arguments);
