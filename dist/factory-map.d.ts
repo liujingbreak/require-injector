@@ -36,6 +36,7 @@ export declare class FactoryMap {
     private resolvePaths;
     static METHODS: string[];
     constructor(config?: Config);
+    asInterface(): FactoryMapInterf & FactoryMap;
     getInjector: (name: string) => FactorySetting;
     matchRequire(name: string): FactorySetting;
     /**

@@ -39,10 +39,10 @@ class TypescriptParser {
         this._addPatch = function (start, end, moduleName, replaceType) {
             if (!this.esReplacer)
                 return;
-            this.esReplacer.addPatch(this.patches, start, end, moduleName, replaceType, factoryMaps, fileParam);
+            this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, fileParam);
         };
         this._addPatch4Import = function (allStart, allEnd, start, end, moduleName, info) {
-            _.some(factoryMaps, factoryMap => {
+            _.some(factoryMaps, (factoryMap) => {
                 var setting = factoryMap.matchRequire(info.from);
                 if (setting) {
                     var replacement = factoryMap.getReplacement(setting, 'imp', fileParam, info);
@@ -50,9 +50,10 @@ class TypescriptParser {
                         patches.push({
                             start: replacement.replaceAll ? allStart : start,
                             end: replacement.replaceAll ? allEnd : end,
-                            replacement: replacement.code
+                            replacement: ' ' + replacement.code
                         });
-                        self.esReplacer.emit('replace', info.from, replacement.code);
+                        if (self.esReplacer)
+                            self.esReplacer.emit('replace', info.from, replacement.code);
                     }
                     return true;
                 }
@@ -88,7 +89,7 @@ class TypescriptParser {
                 }
             }
             this._addPatch4Import(node.pos, node.end, node.moduleSpecifier.pos, node.moduleSpecifier.end, parseInfo.from, parseInfo);
-            // parseInfos.push(parseInfo);
+            // console.log(getTextOf(node.moduleSpecifier, srcfile));
             return;
         }
         else if (ast.kind === ts.SyntaxKind.CallExpression) {
@@ -101,7 +102,7 @@ class TypescriptParser {
                 return;
             }
             else if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-                console.log('Found import() ', node.arguments.map(arg => arg.text));
+                // console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
                 this._addPatch(node.pos, node.end, node.arguments[0].text, 'ima');
                 return;
             }

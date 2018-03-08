@@ -60,6 +60,10 @@ export class FactoryMap {
 			this.config = config;
 	}
 
+	asInterface() {
+		return ((this as any) as FactoryMapInterf & FactoryMap);
+	}
+
 	getInjector: (name: string) => FactorySetting;
 	// you can extend with new method here
 

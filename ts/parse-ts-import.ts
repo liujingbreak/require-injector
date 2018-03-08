@@ -43,11 +43,11 @@ export class TypescriptParser {
 		this._addPatch = function(start: number, end: number, moduleName: string, replaceType: string) {
 			if (! this.esReplacer)
 				return;
-			this.esReplacer.addPatch(this.patches, start, end, moduleName, replaceType, factoryMaps, fileParam);
+			this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, fileParam);
 		};
 		this._addPatch4Import = function(allStart: number, allEnd: number, start: number, end: number,
 			moduleName: string, info: ParseInfo) {
-			_.some(factoryMaps, factoryMap => {
+			_.some(factoryMaps, (factoryMap: FactoryMap) => {
 				var setting = factoryMap.matchRequire(info.from);
 				if (setting) {
 					var replacement = factoryMap.getReplacement(setting, 'imp', fileParam, info);
@@ -55,9 +55,10 @@ export class TypescriptParser {
 						patches.push({
 							start: replacement.replaceAll ? allStart : start,
 							end: replacement.replaceAll ? allEnd : end,
-							replacement: replacement.code
+							replacement: ' ' + replacement.code
 						});
-						self.esReplacer.emit('replace', info.from, replacement.code);
+						if (self.esReplacer)
+							self.esReplacer.emit('replace', info.from, replacement.code);
 					}
 					return true;
 				}
@@ -97,7 +98,7 @@ export class TypescriptParser {
 			}
 			this._addPatch4Import(node.pos, node.end, node.moduleSpecifier.pos, node.moduleSpecifier.end, parseInfo.from,
 				parseInfo);
-			// parseInfos.push(parseInfo);
+			// console.log(getTextOf(node.moduleSpecifier, srcfile));
 			return;
 		} else if (ast.kind === ts.SyntaxKind.CallExpression) {
 			let node = ast as ts.CallExpression;
@@ -108,7 +109,7 @@ export class TypescriptParser {
 				this._addPatch(node.pos, node.end, (node.arguments[0] as ts.StringLiteral).text, 'rq');
 				return;
 			} else if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-				console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
+				// console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
 				this._addPatch(node.pos, node.end, (node.arguments[0] as ts.StringLiteral).text, 'ima');
 				return;
 			} else if (node.expression.kind === ts.SyntaxKind.PropertyAccessExpression) {

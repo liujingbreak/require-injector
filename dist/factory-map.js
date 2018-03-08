@@ -23,6 +23,9 @@ class FactoryMap {
         else
             this.config = config;
     }
+    asInterface() {
+        return this;
+    }
     // you can extend with new method here
     matchRequire(name) {
         if (!name)
