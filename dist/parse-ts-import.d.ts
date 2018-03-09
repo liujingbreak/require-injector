@@ -6,6 +6,6 @@ export declare class TypescriptParser {
     private _addPatch;
     private _addPatch4Import;
     replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, fileParam: any): string;
-    parseTsSource(source: string): void;
+    parseTsSource(source: string, file: string): void;
     private traverseTsAst(ast, srcfile, level?);
 }

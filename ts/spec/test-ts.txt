@@ -1,5 +1,5 @@
 declare function translate(key: string): string;
-
+import './main.less';
 translate('text');
 alert(__api);
 import C, {a as A, b as B} from 'MODULE';
@@ -11,5 +11,5 @@ function () {
 	require['ensure']('zzz', () => {});
 }
 import('asyncModule');
-a.require('xxx');
+a.require('__api');
 export * from 'lodash';
