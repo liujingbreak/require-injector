@@ -3,7 +3,7 @@
 ![https://travis-ci.org/](https://travis-ci.org/dr-web-house/require-injector.svg)
 [Travis build](https://travis-ci.org/dr-web-house/require-injector)
 
-Injecting and replacing require() function in both NodeJS and browser side CommonJS packing tool like Browserify.
+Injecting and replacing `require()` and `import` statement in both NodeJS and browser side JS or Typescript file via packing tool like Webpack.
 
 When it is used for Node, it is a little bit like [app-module-path](https://www.npmjs.com/package/app-module-path),
 when it is used for browser environment JS bundle tool, it is like Webpack 2 `resolve.alias` configuration, but more fine-grained.
@@ -179,7 +179,7 @@ rj.fromPackage('moduleB')
 ```
 
 ### Webpack loader
-> only tested on Webpack v2
+> Requires Webpack version above 2.0
 
 The whole module is a Webpack loader, you can use it in `webpack.config.js`.
 Consider it as more advanced solution for Webpack `resolve.alias` option.
@@ -285,7 +285,8 @@ import "module-name";
 ```
 Even asyc import syntax `import("module-name")`
 
-
+### Support as Webapck loader to replace Typescript file
+You can either put this loader either behide or before babel loader, it can recoganize
 
 ### Injection for server side Swig template
 We also extend injection function to resource type other than Javascript, if you are using server side Swig template engine,
@@ -365,7 +366,7 @@ Emitted when `injectToFile` is called on injector.
 rj.on('replace', (moduleName: string, replacement: string) => {});
 ```
 #### "ast" event
-In replacement mode, requir-injector use Acorn to parse JS/JSX file into AST object, if you want to reuse this AST object, add listerner to this event
+In replacement mode, requir-injector use Acorn or Typescript engine to parse JS/JSX, TS/TSX file into AST object, if you want to reuse this AST object, add listerner to this event
 
 ### FactoryMap API
 
