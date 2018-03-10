@@ -1,7 +1,7 @@
 
 # require-injector
-![https://travis-ci.org/](https://travis-ci.org/dr-web-house/require-injector.svg)
-[Travis build](https://travis-ci.org/dr-web-house/require-injector)
+![Travis CI](https://travis-ci.org/liujingbreak/require-injector.svg?branch=master)
+
 
 Injecting and replacing `require()` and `import` statement in both NodeJS and browser side JS or Typescript file via packing tool like Webpack.
 
