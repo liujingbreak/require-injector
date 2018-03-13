@@ -36,8 +36,8 @@ export class TypescriptParser {
 	private _addPatch4Import: (allStart: number, allEnd: number, start: number, end: number,
 		moduleName: string, info: ParseInfo) => void;
 
-	replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, fileParam: any): string {
-		let patches: any[] = [];
+	replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, fileParam: any): string | null {
+		let patches: {start: number, end: number, replacement: string}[] = [];
 		let self = this;
 		factoryMaps = [].concat(factoryMaps);
 		this._addPatch = function(start: number, end: number, moduleName: string, replaceType: string) {
@@ -67,7 +67,7 @@ export class TypescriptParser {
 		};
 
 		this.parseTsSource(code, fileParam);
-		return patchText(code, patches);
+		return patches.length > 0 ? patchText(code, patches) : null;
 	}
 
 	parseTsSource(source: string, file: string): void{

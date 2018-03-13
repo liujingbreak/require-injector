@@ -61,7 +61,7 @@ class TypescriptParser {
             });
         };
         this.parseTsSource(code, fileParam);
-        return patchText(code, patches);
+        return patches.length > 0 ? patchText(code, patches) : null;
     }
     parseTsSource(source, file) {
         console.log(file);

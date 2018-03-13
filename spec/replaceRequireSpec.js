@@ -20,7 +20,7 @@ describe('replace-require', ()=> {
 			expect(result).toBe('var __imp2__ = daddy, a = __imp2__["ok"], b = __imp2__["nok"];');
 
 			result = rr('import {ok as a, nok as b} from "_";', fm);
-			expect(result).toBe('import {ok as a, nok as b} from "_";');
+			expect(result).toBe(null);
 		});
 
 		it('should work for import default', ()=> {
@@ -57,7 +57,7 @@ describe('replace-require', ()=> {
 			expect(result).toBe('import B from "scrollbar/subdir/file.js";');
 
 			result = rr('import A from "ok";', fm);
-			expect(result).toBe('import A from "ok";');
+			expect(result).toBe(null);
 		});
 	});
 
