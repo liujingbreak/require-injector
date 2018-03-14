@@ -1,6 +1,7 @@
 // import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as Path from 'path';
+import * as vm from 'vm';
 // import * as _ from 'lodash';
 import {TypescriptParser} from '../parse-ts-import';
 import {FactoryMap} from '../factory-map';
@@ -22,19 +23,39 @@ describe("TypescriptParser", () => {
 
 	it("can replace 'import' and 'require' statements ", () => {
 		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
-		console.log(replaced);
-		expect(replaced.indexOf('import * as _ from "underscore";') > 0).toBe(true);
-		expect(replaced.indexOf('var api = API;') > 0).toBe(true);
-		expect(/var a =\s*API;/.test(replaced)).toBe(true);
-		expect(/import\("_asyncModule_"*\);/.test(replaced)).toBe(true);
+		console.log('---------------\n%s\n--------------', replaced);
+		expect(replaced.indexOf('var __imp9__ = API, api = __imp9__["default"];')).toBeGreaterThanOrEqual(0);
+		expect(replaced.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
 		
+		expect(replaced).toMatch(/var a =\s*API;/);
+		expect(replaced).toMatch(/import\("_asyncModule_"*\);/);		
 	});
 
 	it('require.ensure should be replaced', () => {
 		expect(/require.ensure\("_yyy_",/.test(replaced)).toBe(true);
 	});
 
+	it('replaceCode should work with import * ....', () => {
+		let source = 'import * as _ from \'lodash\';';
+		let fm = new FactoryMap().asInterface();
+		fm.replaceCode('lodash', '"hellow"');
+		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
+		var sandbox: any = {
+			module: {
+				exports: {}
+			}
+		};
+		vm.runInNewContext(replaced, vm.createContext(sandbox));
+		expect(sandbox._).toBe('hellow');
+	});
 
+	it('replaceCode should work with import "foobar"', () => {
+		let source = 'import \'lodash\';';
+		let fm = new FactoryMap().asInterface();
+		fm.replaceCode('lodash', 'foobar()');
+		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
+		expect(replaced).toMatch(/\s*foobar\(\);$/);
+	});
 });
 
 export default {

@@ -78,12 +78,12 @@ class TypescriptParser {
             parseInfo.from = node.moduleSpecifier.text;
             // parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.pos, node.moduleSpecifier.end))[1];
             if (_.get(node, 'importClause.name')) {
-                parseInfo.defaultVars.push(node.importClause.name.text);
+                parseInfo.defaultVar = node.importClause.name.text;
             }
             if (_.get(node, 'importClause.namedBindings')) {
                 let nb = node.importClause.namedBindings;
                 if (nb.kind === SyntaxKind.NamespaceImport)
-                    parseInfo.vars[nb.name.text] = '*';
+                    parseInfo.namespaceVar = nb.name.text;
                 else {
                     nb.elements.forEach(element => {
                         parseInfo.vars[element.name.text] = element.propertyName ? element.propertyName.text : element.name.text;

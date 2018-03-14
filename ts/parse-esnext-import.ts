@@ -4,37 +4,30 @@ import * as _ from 'lodash';
 var seq = 0;
 
 export function toAssignment(parsedInfo: ParseInfo, valueStr: string): string {
-	var dec = 'var ';
-	var i = 0;
+	var dec = '';
+
 	var importsVarName: string;
-	if (parsedInfo.defaultVars.length === 0) {
-		importsVarName = '__imp' + uid() + '__';
-		dec += importsVarName + ' = ' + valueStr;
-		i++;
-	} else
-		importsVarName = parsedInfo.defaultVars[0];
-	_.each(parsedInfo.defaultVars, name => {
-		if (i > 0)
-			dec += ', ';
-		if (i === 0) {
-			dec += name + ' = ' + valueStr;
-		} else
-			dec += name + ' = ' + importsVarName;
-		i++;
-	});
+	importsVarName = '__imp' + uid() + '__';
+	if (parsedInfo.defaultVar) {
+		dec += `, ${parsedInfo.defaultVar} = ${importsVarName}["default"]`;
+	}
+	if (parsedInfo.namespaceVar) {
+		dec += `, ${parsedInfo.namespaceVar} = ${importsVarName}`;
+	}
 	_.each(parsedInfo.vars, (member, name) => {
-		if (i > 0)
-			dec += ', ';
-		dec += name + ' = ' + importsVarName + '[' + JSON.stringify(member ? member : name) + ']';
-		i++;
+		dec += ', ' + name + ' = ' + importsVarName + '[' + JSON.stringify(member ? member : name) + ']';
 	});
-	dec += ';';
-	return dec;
+	if (dec.length > 0) {
+		return `var ${importsVarName} = ${valueStr}${dec};`;
+	} else {
+		return valueStr + ';';
+	}
 }
 
 export class ParseInfo {
-	vars: {[k: string]: string} = {};
-	defaultVars: string[] = [];
+	vars: {[k: string]: string} = {}; // import {foo as bar ...}
+	defaultVar: string; // import foo from ...
+	namespaceVar: string; // import * as ...
 	from: string = null;
 }
 
@@ -46,9 +39,13 @@ export class ParseExportInfo {
 export function parse(ast: any): ParseInfo{
 	var res: ParseInfo = new ParseInfo();
 	ast.specifiers.forEach(function(speci: any) {
+		if (speci.type === 'ImportDefaultSpecifier') {
+			res.defaultVar = _.get(speci, 'local.name');
+			return;
+		}
 		var imported = _.get(speci, 'imported.name');
 		if (!imported)
-			res.defaultVars.push(speci.local.name);
+			res.namespaceVar = speci.local.name;
 		else
 			res.vars[speci.local.name] = imported;
 	});

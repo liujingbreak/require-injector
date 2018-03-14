@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 // import * as ts from 'typescript';
 const fs = require("fs");
 const Path = require("path");
+const vm = require("vm");
 // import * as _ from 'lodash';
 const parse_ts_import_1 = require("../parse-ts-import");
 const factory_map_1 = require("../factory-map");
@@ -22,14 +23,34 @@ describe("TypescriptParser", () => {
     var replaced;
     it("can replace 'import' and 'require' statements ", () => {
         replaced = new parse_ts_import_1.TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
-        console.log(replaced);
-        expect(replaced.indexOf('import * as _ from "underscore";') > 0).toBe(true);
-        expect(replaced.indexOf('var api = API;') > 0).toBe(true);
-        expect(/var a =\s*API;/.test(replaced)).toBe(true);
-        expect(/import\("_asyncModule_"*\);/.test(replaced)).toBe(true);
+        console.log('---------------\n%s\n--------------', replaced);
+        expect(replaced.indexOf('var __imp9__ = API, api = __imp9__["default"];')).toBeGreaterThanOrEqual(0);
+        expect(replaced.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
+        expect(replaced).toMatch(/var a =\s*API;/);
+        expect(replaced).toMatch(/import\("_asyncModule_"*\);/);
     });
     it('require.ensure should be replaced', () => {
         expect(/require.ensure\("_yyy_",/.test(replaced)).toBe(true);
+    });
+    it('replaceCode should work with import * ....', () => {
+        let source = 'import * as _ from \'lodash\';';
+        let fm = new factory_map_1.FactoryMap().asInterface();
+        fm.replaceCode('lodash', '"hellow"');
+        replaced = new parse_ts_import_1.TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
+        var sandbox = {
+            module: {
+                exports: {}
+            }
+        };
+        vm.runInNewContext(replaced, vm.createContext(sandbox));
+        expect(sandbox._).toBe('hellow');
+    });
+    it('replaceCode should work with import "foobar"', () => {
+        let source = 'import \'lodash\';';
+        let fm = new factory_map_1.FactoryMap().asInterface();
+        fm.replaceCode('lodash', 'foobar()');
+        replaced = new parse_ts_import_1.TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
+        expect(replaced).toMatch(/\s*foobar\(\);$/);
     });
 });
 exports.default = {

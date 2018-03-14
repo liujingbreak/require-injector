@@ -4,9 +4,36 @@ var Path = require('path');
 var fs = require('fs');
 var _ = require('lodash');
 var {FactoryMap} = require('../dist/factory-map');
+const vm = require('vm');
 
 describe('replace-require', ()=> {
 	describe('ES6 import', ()=> {
+		it('replaceCode() should work with import * ....', () => {
+			let source = 'import * as _ from \'lodash\';';
+			let fm = new FactoryMap();
+			fm.replaceCode('lodash', '"hellow"');
+			replaced = rr(source, fm, 'test.ts');
+			console.log(replaced);
+			var sandbox = {
+				module: {
+					exports: {}
+				}
+			};
+			vm.runInNewContext(replaced, vm.createContext(sandbox));
+			expect(sandbox._).toBe('hellow');
+		});
+
+		it('replaceCode() should work with import default from ...', () => {
+			let source = 'import _ from \'lodash\';';
+			let fm = new FactoryMap();
+			fm.replaceCode('lodash', '{default: "DEFAULT"}');
+			replaced = rr(source, fm, 'test.ts');
+			console.log(replaced);
+			var sandbox = {};
+			vm.runInNewContext(replaced, vm.createContext(sandbox));
+			expect(sandbox._).toBe('DEFAULT');
+		});
+
 		it('should work for import with mutiple specfics', ()=> {
 			var fm = new FactoryMap();
 			fm.value('hellow', {replacement: 'sugar'});
@@ -14,10 +41,10 @@ describe('replace-require', ()=> {
 			fm.substitute('foobar', '_');
 
 			var result = rr('import {ok as a, nok as b} from "hellow";', fm);
-			expect(result).toBe('var __imp1__ = sugar, a = __imp1__["ok"], b = __imp1__["nok"];');
+			expect(/^var __imp[0-9]__ = sugar, a = __imp[0-9]__\["ok"\], b = __imp[0-9]__\["nok"\];$/.test(result)).toBe(true);
 
 			result = rr('import {ok as a, nok as b} from "world";', fm);
-			expect(result).toBe('var __imp2__ = daddy, a = __imp2__["ok"], b = __imp2__["nok"];');
+			expect(/^var __imp\d__ = daddy, a = __imp\d__\["ok"\], b = __imp\d__\["nok"\];$/.test(result)).toBe(true);
 
 			result = rr('import {ok as a, nok as b} from "_";', fm);
 			expect(result).toBe(null);
@@ -30,19 +57,19 @@ describe('replace-require', ()=> {
 			fm.alias('foobar', 'xxx');
 
 			var result = rr('import A from "hellow";//...', fm);
-			expect(result).toBe('var A = sugar;//...');
+			expect(/^var __imp\d__ = sugar, A = __imp\d__\["default"\];\/\/\.\.\.$/.test(result)).toBe(true);
 
 			result = rr('import * as B from "world";', fm);
-			expect(result).toBe('var B = daddy;');
+			expect(/^var __imp\d__ = daddy, B = __imp\d__;$/.test(result)).toBe(true);
 
 			result = rr('import "foobar";', fm);
 			expect(result).toBe('import "xxx";');
 
 			result = rr('import "world";', fm);
-			expect(result).toBe('var __imp3__ = daddy;');
+			expect(/^daddy;$/.test(result)).toBe(true);
 
 			result = rr('import a, {b} from "world";', fm);
-			expect(result).toBe('var a = daddy, b = a["b"];');
+			expect(result).toBe('var __imp8__ = daddy, a = __imp8__["default"], b = __imp8__["b"];');
 		});
 
 		it('should work for alias', () => {
