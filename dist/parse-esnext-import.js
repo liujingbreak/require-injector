@@ -4,40 +4,29 @@ const _ = require("lodash");
 // var {EOL} = require('os');
 var seq = 0;
 function toAssignment(parsedInfo, valueStr) {
-    var dec = 'var ';
-    var i = 0;
+    var dec = '';
     var importsVarName;
-    if (parsedInfo.defaultVars.length === 0) {
-        importsVarName = '__imp' + uid() + '__';
-        dec += importsVarName + ' = ' + valueStr;
-        i++;
+    importsVarName = '__imp' + uid() + '__';
+    if (parsedInfo.defaultVar) {
+        dec += `, ${parsedInfo.defaultVar} = ${importsVarName}["default"]`;
     }
-    else
-        importsVarName = parsedInfo.defaultVars[0];
-    _.each(parsedInfo.defaultVars, name => {
-        if (i > 0)
-            dec += ', ';
-        if (i === 0) {
-            dec += name + ' = ' + valueStr;
-        }
-        else
-            dec += name + ' = ' + importsVarName;
-        i++;
-    });
+    if (parsedInfo.namespaceVar) {
+        dec += `, ${parsedInfo.namespaceVar} = ${importsVarName}`;
+    }
     _.each(parsedInfo.vars, (member, name) => {
-        if (i > 0)
-            dec += ', ';
-        dec += name + ' = ' + importsVarName + '[' + JSON.stringify(member ? member : name) + ']';
-        i++;
+        dec += ', ' + name + ' = ' + importsVarName + '[' + JSON.stringify(member ? member : name) + ']';
     });
-    dec += ';';
-    return dec;
+    if (dec.length > 0) {
+        return `var ${importsVarName} = ${valueStr}${dec};`;
+    }
+    else {
+        return valueStr + ';';
+    }
 }
 exports.toAssignment = toAssignment;
 class ParseInfo {
     constructor() {
-        this.vars = {};
-        this.defaultVars = [];
+        this.vars = {}; // import {foo as bar ...}
         this.from = null;
     }
 }
@@ -52,9 +41,13 @@ exports.ParseExportInfo = ParseExportInfo;
 function parse(ast) {
     var res = new ParseInfo();
     ast.specifiers.forEach(function (speci) {
+        if (speci.type === 'ImportDefaultSpecifier') {
+            res.defaultVar = _.get(speci, 'local.name');
+            return;
+        }
         var imported = _.get(speci, 'imported.name');
         if (!imported)
-            res.defaultVars.push(speci.local.name);
+            res.namespaceVar = speci.local.name;
         else
             res.vars[speci.local.name] = imported;
     });

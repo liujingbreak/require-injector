@@ -3,7 +3,8 @@ export declare class ParseInfo {
     vars: {
         [k: string]: string;
     };
-    defaultVars: string[];
+    defaultVar: string;
+    namespaceVar: string;
     from: string;
 }
 export declare class ParseExportInfo {
