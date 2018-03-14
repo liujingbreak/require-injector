@@ -64,7 +64,6 @@ class TypescriptParser {
         return patches.length > 0 ? patchText(code, patches) : null;
     }
     parseTsSource(source, file) {
-        console.log(file);
         let srcfile = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, false, ts.ScriptKind.TSX);
         for (let stm of srcfile.statements) {
             this.traverseTsAst(stm, srcfile);

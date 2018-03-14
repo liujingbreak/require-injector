@@ -71,7 +71,6 @@ export class TypescriptParser {
 	}
 
 	parseTsSource(source: string, file: string): void{
-		console.log(file);
 		let srcfile = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
 			false, ts.ScriptKind.TSX);
 		for(let stm of srcfile.statements) {
