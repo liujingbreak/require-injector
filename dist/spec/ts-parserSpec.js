@@ -24,7 +24,7 @@ describe("TypescriptParser", () => {
     it("can replace 'import' and 'require' statements ", () => {
         replaced = new parse_ts_import_1.TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
         console.log('---------------\n%s\n--------------', replaced);
-        expect(replaced.indexOf('var __imp1__ = API, api = __imp1__["default"];')).toBeGreaterThanOrEqual(0);
+        expect(replaced.indexOf('var __imp9__ = API, api = __imp9__["default"];')).toBeGreaterThanOrEqual(0);
         expect(replaced.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
         expect(replaced).toMatch(/var a =\s*API;/);
         expect(replaced).toMatch(/import\("_asyncModule_"*\);/);
