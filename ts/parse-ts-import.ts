@@ -80,17 +80,20 @@ export class TypescriptParser {
 	}
 
 	private traverseTsAst(ast: ts.Node, srcfile: ts.SourceFile, level = 0) {
-		if (ast.kind === ts.SyntaxKind.ImportDeclaration) {
+		let SyntaxKind = ts.SyntaxKind;
+		if (ast.kind === SyntaxKind.ImportDeclaration) {
 			let node = ast as ts.ImportDeclaration;
 			// console.log('found import statement:', ast.getText(srcfile));
 			let parseInfo = new ParseInfo();
-			parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.pos, node.moduleSpecifier.end))[1];
+			parseInfo.from = (node.moduleSpecifier as ts.StringLiteral).text;
+
+			// parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.pos, node.moduleSpecifier.end))[1];
 			if (_.get(node, 'importClause.name')) {
 				parseInfo.defaultVars.push(node.importClause.name.text);
 			}
 			if (_.get(node, 'importClause.namedBindings')) {
 				let nb = node.importClause.namedBindings;
-				if (nb.kind === ts.SyntaxKind.NamespaceImport)
+				if (nb.kind === SyntaxKind.NamespaceImport)
 					parseInfo.vars[nb.name.text] = '*';
 				else {
 					nb.elements.forEach(element => {
@@ -102,25 +105,25 @@ export class TypescriptParser {
 				parseInfo);
 			// console.log(getTextOf(node.moduleSpecifier, srcfile));
 			return;
-		} else if (ast.kind === ts.SyntaxKind.CallExpression) {
+		} else if (ast.kind === SyntaxKind.CallExpression) {
 			let node = ast as ts.CallExpression;
-			if (node.expression.kind === ts.SyntaxKind.Identifier &&
+			if (node.expression.kind === SyntaxKind.Identifier &&
 				(node.expression as ts.Identifier).text === 'require' &&
-				node.arguments[0].kind === ts.SyntaxKind.StringLiteral) {
+				node.arguments[0].kind === SyntaxKind.StringLiteral) {
 				// console.log('Found', getTextOf(node, srcfile));
 				this._addPatch(node.pos, node.end, (node.arguments[0] as ts.StringLiteral).text, 'rq');
 				return;
-			} else if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+			} else if (node.expression.kind === SyntaxKind.ImportKeyword) {
 				// console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
 				this._addPatch(node.pos, node.end, (node.arguments[0] as ts.StringLiteral).text, 'ima');
 				return;
-			} else if (node.expression.kind === ts.SyntaxKind.PropertyAccessExpression) {
+			} else if (node.expression.kind === SyntaxKind.PropertyAccessExpression) {
 				let left = (node.expression as ts.PropertyAccessExpression).expression;
 				let right = (node.expression as ts.PropertyAccessExpression).name;
-				if (left.kind === ts.SyntaxKind.Identifier && (left as ts.Identifier).text === 'require' &&
-				right.kind === ts.SyntaxKind.Identifier && (right as ts.Identifier).text === 'ensure') {
+				if (left.kind === SyntaxKind.Identifier && (left as ts.Identifier).text === 'require' &&
+				right.kind === SyntaxKind.Identifier && (right as ts.Identifier).text === 'ensure') {
 					node.arguments.forEach((arg) => {
-						if (arg.kind === ts.SyntaxKind.StringLiteral) {
+						if (arg.kind === SyntaxKind.StringLiteral) {
 							this._addPatch(arg.pos, arg.end, (arg as ts.StringLiteral).text, 'rs');
 							console.log(`replace require.ensure(${(arg as ts.StringLiteral).text})`);
 						}

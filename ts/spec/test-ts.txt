@@ -1,4 +1,5 @@
 declare function translate(key: string): string;
+const A = require('a');
 import './main.less';
 translate('text');
 alert(__api);
