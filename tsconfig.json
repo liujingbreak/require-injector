@@ -1,9 +1,7 @@
 {
 	"compilerOptions": {
-		"baseUrl": ".",
 		"outDir": "dist",
 		"declaration": true,
-		"rootDir": "ts",
 		"module":"commonjs",
 		"target":"es2016",
 		"allowJs": false,
@@ -15,12 +13,6 @@
 		"emitDecoratorMetadata": true,
 		"noUnusedLocals": true,
 		"lib": ["es2016", "es2015"],
-		
-		"paths": {
-			"*": [
-				"node_modules/*"
-			]
-		},
 		"pretty": true,
 	},
 	"include": ["ts/**/*.ts"]
