@@ -32,20 +32,20 @@ class TypescriptParser {
     constructor(esReplacer = null) {
         this.esReplacer = esReplacer;
     }
-    replace(code, factoryMaps, fileParam) {
+    replace(code, factoryMaps, filePath, ast) {
         let patches = [];
         let self = this;
         factoryMaps = [].concat(factoryMaps);
         this._addPatch = function (start, end, moduleName, replaceType) {
             if (!this.esReplacer)
                 return;
-            this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, fileParam);
+            this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, filePath);
         };
         this._addPatch4Import = function (allStart, allEnd, start, end, moduleName, info) {
             _.some(factoryMaps, (factoryMap) => {
                 var setting = factoryMap.matchRequire(info.from);
                 if (setting) {
-                    var replacement = factoryMap.getReplacement(setting, 'imp', fileParam, info);
+                    var replacement = factoryMap.getReplacement(setting, 'imp', filePath, info);
                     if (replacement != null) {
                         patches.push({
                             start: replacement.replaceAll ? allStart : start,
@@ -60,11 +60,11 @@ class TypescriptParser {
                 return false;
             });
         };
-        this.parseTsSource(code, fileParam);
+        this.parseTsSource(code, filePath, ast);
         return patches.length > 0 ? patchText(code, patches) : null;
     }
-    parseTsSource(source, file) {
-        let srcfile = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, false, ts.ScriptKind.TSX);
+    parseTsSource(source, file, ast) {
+        let srcfile = ast || ts.createSourceFile(file, source, ts.ScriptTarget.ESNext, false, ts.ScriptKind.TSX);
         for (let stm of srcfile.statements) {
             this.traverseTsAst(stm, srcfile);
         }

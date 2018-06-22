@@ -36,21 +36,21 @@ export class TypescriptParser {
 	private _addPatch4Import: (allStart: number, allEnd: number, start: number, end: number,
 		moduleName: string, info: ParseInfo) => void;
 
-	replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, fileParam: any): string | null {
+	replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile): string | null {
 		let patches: {start: number, end: number, replacement: string}[] = [];
 		let self = this;
 		factoryMaps = [].concat(factoryMaps);
 		this._addPatch = function(start: number, end: number, moduleName: string, replaceType: string) {
 			if (! this.esReplacer)
 				return;
-			this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, fileParam);
+			this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, filePath);
 		};
 		this._addPatch4Import = function(allStart: number, allEnd: number, start: number, end: number,
 			moduleName: string, info: ParseInfo) {
 			_.some(factoryMaps, (factoryMap: FactoryMap) => {
 				var setting = factoryMap.matchRequire(info.from);
 				if (setting) {
-					var replacement = factoryMap.getReplacement(setting, 'imp', fileParam, info);
+					var replacement = factoryMap.getReplacement(setting, 'imp', filePath, info);
 					if (replacement != null) {
 						patches.push({
 							start: replacement.replaceAll ? allStart : start,
@@ -66,12 +66,12 @@ export class TypescriptParser {
 			});
 		};
 
-		this.parseTsSource(code, fileParam);
+		this.parseTsSource(code, filePath, ast);
 		return patches.length > 0 ? patchText(code, patches) : null;
 	}
 
-	parseTsSource(source: string, file: string): void{
-		let srcfile = ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
+	parseTsSource(source: string, file: string, ast?: ts.SourceFile): void{
+		let srcfile = ast || ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
 			false, ts.ScriptKind.TSX);
 		for(let stm of srcfile.statements) {
 			this.traverseTsAst(stm, srcfile);
