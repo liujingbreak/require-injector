@@ -30,6 +30,7 @@ export function parseTs(file: string) {
 }
 
 export class TypescriptParser {
+	srcfile: ts.SourceFile;
 	constructor(public esReplacer: any = null) {}
 
 	private _addPatch: (start: number, end: number, moduleName: string, replaceType: string) => void;
@@ -55,7 +56,7 @@ export class TypescriptParser {
 						patches.push({
 							start: replacement.replaceAll ? allStart : start,
 							end: replacement.replaceAll ? allEnd : end,
-							replacement: ' ' + replacement.code
+							replacement: replacement.code
 						});
 						if (self.esReplacer)
 							self.esReplacer.emit('replace', info.from, replacement.code);
@@ -71,10 +72,10 @@ export class TypescriptParser {
 	}
 
 	parseTsSource(source: string, file: string, ast?: ts.SourceFile): void{
-		let srcfile = ast || ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
+		this.srcfile = ast || ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
 			false, ts.ScriptKind.TSX);
-		for(let stm of srcfile.statements) {
-			this.traverseTsAst(stm, srcfile);
+		for(let stm of this.srcfile.statements) {
+			this.traverseTsAst(stm, this.srcfile);
 		}
 	}
 
@@ -86,7 +87,7 @@ export class TypescriptParser {
 			let parseInfo = new ParseInfo();
 			parseInfo.from = (node.moduleSpecifier as ts.StringLiteral).text;
 
-			// parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.pos, node.moduleSpecifier.end))[1];
+			// parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.getStart(this.srcfile, false), node.moduleSpecifier.getEnd()))[1];
 			if (_.get(node, 'importClause.name')) {
 				parseInfo.defaultVar = node.importClause.name.text;
 			}
@@ -100,8 +101,8 @@ export class TypescriptParser {
 					});
 				}
 			}
-			this._addPatch4Import(node.pos, node.end, node.moduleSpecifier.pos, node.moduleSpecifier.end, parseInfo.from,
-				parseInfo);
+			this._addPatch4Import(node.getStart(this.srcfile, false), node.getEnd(), node.moduleSpecifier.getStart(this.srcfile, false),
+				node.moduleSpecifier.getEnd(), parseInfo.from, parseInfo);
 			// console.log(getTextOf(node.moduleSpecifier, srcfile));
 			return;
 		} else if (ast.kind === SyntaxKind.CallExpression) {
@@ -110,11 +111,11 @@ export class TypescriptParser {
 				(node.expression as ts.Identifier).text === 'require' &&
 				node.arguments[0].kind === SyntaxKind.StringLiteral) {
 				// console.log('Found', getTextOf(node, srcfile));
-				this._addPatch(node.pos, node.end, (node.arguments[0] as ts.StringLiteral).text, 'rq');
+				this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, 'rq');
 				return;
 			} else if (node.expression.kind === SyntaxKind.ImportKeyword) {
 				// console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
-				this._addPatch(node.pos, node.end, (node.arguments[0] as ts.StringLiteral).text, 'ima');
+				this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, 'ima');
 				return;
 			} else if (node.expression.kind === SyntaxKind.PropertyAccessExpression) {
 				let left = (node.expression as ts.PropertyAccessExpression).expression;
@@ -123,7 +124,7 @@ export class TypescriptParser {
 				right.kind === SyntaxKind.Identifier && (right as ts.Identifier).text === 'ensure') {
 					node.arguments.forEach((arg) => {
 						if (arg.kind === SyntaxKind.StringLiteral) {
-							this._addPatch(arg.pos, arg.end, (arg as ts.StringLiteral).text, 'rs');
+							this._addPatch(arg.getStart(this.srcfile, false), arg.getEnd(), (arg as ts.StringLiteral).text, 'rs');
 							console.log(`replace require.ensure(${(arg as ts.StringLiteral).text})`);
 						}
 					});
@@ -138,5 +139,5 @@ export class TypescriptParser {
 }
 
 // function getTextOf(ast: ts.Node, srcfile: ts.SourceFile): string {
-// 	return srcfile.text.substring(ast.pos, ast.end);
+// 	return srcfile.text.substring(ast.getStart(this.srcfile, false), ast.getEnd());
 // }

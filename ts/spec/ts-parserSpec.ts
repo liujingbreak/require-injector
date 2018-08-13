@@ -28,7 +28,7 @@ describe("TypescriptParser", () => {
 		expect(replaced.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
 		
 		expect(replaced).toMatch(/var a =\s*API;/);
-		expect(replaced).toMatch(/import\("_asyncModule_"*\);/);		
+		expect(replaced).toMatch(/import\("_asyncModule_"*\);/);
 	});
 
 	it('require.ensure should be replaced', () => {
