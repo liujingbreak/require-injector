@@ -1,3 +1,4 @@
+// tslint:disable:no-console
 // import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as Path from 'path';
@@ -7,10 +8,10 @@ import {TypescriptParser} from '../parse-ts-import';
 import {FactoryMap} from '../factory-map';
 const EsReplacer = require('../../lib/replace-require');
 
-describe("TypescriptParser", () => {
+describe('TypescriptParser', () => {
 	let file = Path.resolve(__dirname, '../../ts/spec/test-ts.txt');
 	let source = fs.readFileSync(file, 'utf8');
-	let fm = new FactoryMap().asInterface();
+	let fm = new FactoryMap();
 	fm.alias('lodash', 'underscore');
 	fm.replaceCode('__api', (file) => {
 		if (file.endsWith('.ts'))
@@ -21,12 +22,12 @@ describe("TypescriptParser", () => {
 	fm.alias('yyy', '_yyy_');
 	var replaced: string;
 
-	it("can replace 'import' and 'require' statements ", () => {
+	it('can replace \'import\' and \'require\' statements ', () => {
 		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
 		console.log('---------------\n%s\n--------------', replaced);
 		expect(/var __imp[0-9]__ = API, api = __imp[0-9]__\["default"\];/.test(replaced)).toBeTruthy();
 		expect(replaced.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
-		
+
 		expect(replaced).toMatch(/var a =\s*API;/);
 		expect(replaced).toMatch(/import\("_asyncModule_"*\);/);
 	});
@@ -37,7 +38,7 @@ describe("TypescriptParser", () => {
 
 	it('replaceCode should work with import * ....', () => {
 		let source = 'import * as _ from \'lodash\';';
-		let fm = new FactoryMap().asInterface();
+		let fm = new FactoryMap();
 		fm.replaceCode('lodash', '"hellow"');
 		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
 		var sandbox: any = {
@@ -51,7 +52,7 @@ describe("TypescriptParser", () => {
 
 	it('replaceCode should work with import "foobar"', () => {
 		let source = 'import \'lodash\';';
-		let fm = new FactoryMap().asInterface();
+		let fm = new FactoryMap();
 		fm.replaceCode('lodash', 'foobar()');
 		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
 		expect(replaced).toMatch(/\s*foobar\(\);$/);
@@ -60,4 +61,4 @@ describe("TypescriptParser", () => {
 
 export default {
 	ok: 1
-}
+};

@@ -1,8 +1,9 @@
 {
   "name": "require-injector",
-  "version": "4.2.2",
+  "version": "5.0.0-alpha.1",
   "description": "Resolve and replacing require() function in both NodeJS and browser side CommonJS packing tool like Webpack and Browserify.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "loader": "webpack-loader",
   "scripts": {
     "init": "rm -rf spec/node_modules/require-injector && mkdir spec/node_modules/require-injector && cp -r lib spec/node_modules/require-injector/ && cp -r dist spec/node_modules/require-injector/ && cp *.js spec/node_modules/require-injector/ && cp *.json spec/node_modules/require-injector/",
@@ -65,10 +66,13 @@
     "@types/jasmine": "^2.8.6",
     "@types/node": "^9.4.0",
     "@types/lodash": "^4.14.97",
-    "typescript": "~2.9.2"
+    "@types/through2": "^2.0.34",
+    "typescript": "~2.9.2",
+    "tslint": "^5.11.0",
+    "tslint-eslint-rules": "^5.4.0"
   },
   "peerDependencies": {
     "log4js": "*",
-    "typescript": "~2.4.2"
+    "typescript": "~2.9.2"
   }
 }

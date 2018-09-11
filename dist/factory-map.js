@@ -2,29 +2,51 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 var Path = require('path');
-var { toAssignment } = require('../dist/parse-esnext-import');
+const parse_esnext_import_1 = require("./parse-esnext-import");
 /** // TODO */
 var ReplaceType;
 (function (ReplaceType) {
     ReplaceType[ReplaceType["rq"] = 0] = "rq";
     ReplaceType[ReplaceType["ima"] = 1] = "ima";
     ReplaceType[ReplaceType["imp"] = 2] = "imp";
-    ReplaceType[ReplaceType["rs"] = 3] = "rs";
+    ReplaceType[ReplaceType["rs"] = 3] = "rs"; // require.ensure()
 })(ReplaceType = exports.ReplaceType || (exports.ReplaceType = {}));
 class FactoryMap {
+    // static METHODS: string[] = ['factory', 'substitute', 'value', 'swigTemplateDir', 'replaceCode', 'variable'];
     constructor(config) {
         this.requireMap = {};
         this.beginWithSearch = []; // Binary search
         this.regexSettings = [];
         this.beginWithSorted = false;
         this.resolvePaths = null;
-        if (config == undefined)
+        if (config === undefined)
             this.config = {};
         else
             this.config = config;
     }
-    asInterface() {
-        return this;
+    factory(requiredModule, factoryFunc) {
+        return this._addSetting('factory', requiredModule, factoryFunc);
+    }
+    substitute(requiredModule, newModule) {
+        return this._addSetting('substitute', requiredModule, newModule);
+    }
+    value(requiredModule, newModule) {
+        return this._addSetting('value', requiredModule, newModule);
+    }
+    swigTemplateDir(requiredModule, dir) {
+        return this._addSetting('swigTemplateDir', requiredModule, dir);
+    }
+    replaceCode(requiredModule, newModule) {
+        return this._addSetting('replaceCode', requiredModule, newModule);
+    }
+    alias(requiredModule, newModule) {
+        return this._addSetting('substitute', requiredModule, newModule);
+    }
+    // asInterface() {
+    // 	return ((this as any) as FactoryMapInterf & FactoryMap);
+    // }
+    getInjector(name) {
+        return this.matchRequire(name);
     }
     // you can extend with new method here
     matchRequire(name) {
@@ -36,14 +58,14 @@ class FactoryMap {
             webpackLoaderPrefix = name.substring(0, webpackLoaderIdx + 1);
             name = name.substring(webpackLoaderIdx + 1);
         }
-        var setting;
+        let setting;
         if (_.has(this.requireMap, name)) {
             setting = _.extend({}, this.requireMap[name]);
             setting.prefix = webpackLoaderPrefix;
             return setting;
         }
         else {
-            var isPath = _.startsWith(name, '.') || Path.isAbsolute(name);
+            const isPath = _.startsWith(name, '.') || Path.isAbsolute(name);
             if (!isPath && (_.startsWith(name, '@') || name.indexOf('/') > 0)) {
                 var m = /^((?:@[^\/]+\/)?[^\/]+)(\/.+?)?$/.exec(name);
                 if (m && _.has(this.requireMap, m[1])) {
@@ -53,7 +75,7 @@ class FactoryMap {
                     return setting;
                 }
             }
-            var foundReg = _.find(this.regexSettings, s => {
+            let foundReg = _.find(this.regexSettings, s => {
                 s.execResult = s.regex.exec(name);
                 return s.execResult != null;
             });
@@ -72,7 +94,7 @@ class FactoryMap {
     /**
      *
      * @param  {any} factorySetting matchRequire() returned value
-     * @param  {string} type       "rq" for "require()", "rs" for "require.ensure"
+     * @param  {ReplaceType} type       "rq" for "require()", "rs" for "require.ensure"
      * @param  {string} fileParam  current replacing file path
      * @return {string}            replacement text
      */
@@ -84,7 +106,7 @@ class FactoryMap {
     getInjected(factorySetting, calleeModuleId, calleeModule, requireCall) {
         if (!factorySetting)
             throw new Error('This is require-injector\'s fault, error due to null factorySetting, tell author about it.');
-        return injectActions[factorySetting.method](factorySetting.value, calleeModuleId, calleeModule, requireCall, factorySetting.subPath);
+        return injectActions[factorySetting.method].call(this, factorySetting.value, calleeModuleId, calleeModule, requireCall, factorySetting.subPath);
     }
     addResolvePath(dir) {
         if (this.resolvePaths == null)
@@ -92,42 +114,61 @@ class FactoryMap {
         this.resolvePaths.push(dir);
         return this;
     }
+    _addSetting(method, name, value) {
+        if (_.isRegExp(name)) {
+            this.regexSettings.push({
+                regex: name,
+                method,
+                value,
+                subPath: '',
+                prefix: ''
+            });
+        }
+        else {
+            this.requireMap[name] = {
+                method,
+                value,
+                subPath: '',
+                prefix: ''
+            };
+        }
+        return this;
+    }
 }
-FactoryMap.METHODS = ['factory', 'substitute', 'value', 'swigTemplateDir', 'replaceCode', 'variable'];
 exports.FactoryMap = FactoryMap;
 let replaceActions = {
-    factory(setting, type, fileParam, execResult, astInfo, prefix, subPath) {
-        var sourcePath = JSON.stringify(this.config.enableFactoryParamFile ? fileParam : '');
-        var execFactory = '(' + setting.toString() + ')(' + sourcePath +
+    factory(value, type, fileParam, execResult, astInfo, prefix, subPath) {
+        const sourcePath = JSON.stringify(this.config.enableFactoryParamFile ? fileParam : '');
+        const execFactory = '(' + value.toString() + ')(' + sourcePath +
             (execResult ? ',' + JSON.stringify(execResult) : '') + ')';
-        if (type === 'rq' || type === 'ima') {
+        if (type === ReplaceType.rq || type === ReplaceType.ima) { // for require() or import()
             return execFactory;
         }
-        else if (type === 'imp') {
+        else if (type === ReplaceType.imp) {
             return {
                 replaceAll: true,
-                code: toAssignment(astInfo, execFactory)
+                code: parse_esnext_import_1.toAssignment(astInfo, execFactory)
             };
         }
         return null;
     },
     substitute(setting, type, fileParam, execResult, astInfo, prefix, subPath) {
-        if (type === 'rs') {
+        if (type === ReplaceType.rs) { // for require.ensure
             if (_.isFunction(setting))
                 return JSON.stringify(setting(fileParam, execResult) + subPath);
             return JSON.stringify(setting + subPath);
         }
-        else if (type === 'rq') {
+        else if (type === ReplaceType.rq) {
             if (_.isFunction(setting))
                 return 'require(' + JSON.stringify(prefix + setting(fileParam, execResult)) + subPath + ')';
             return 'require(' + JSON.stringify(prefix + setting + subPath) + ')';
         }
-        else if (type === 'ima') {
+        else if (type === ReplaceType.ima) {
             if (_.isFunction(setting))
                 return 'import(' + JSON.stringify(prefix + setting(fileParam, execResult)) + subPath + ')';
             return 'import(' + JSON.stringify(prefix + setting) + subPath + ')';
         }
-        else if (type === 'imp') {
+        else if (type === ReplaceType.imp) {
             var replaced = _.isFunction(setting) ? setting(fileParam, execResult) : setting;
             replaced = JSON.stringify(prefix + replaced + subPath);
             return {
@@ -137,20 +178,21 @@ let replaceActions = {
         }
     },
     value(setting, type, fileParam, execResult, astInfo, prefix, subPath) {
-        if (type === 'rq' || type === 'imp' || type === 'ima') {
+        if (type === ReplaceType.rq || type === ReplaceType.imp || type === ReplaceType.ima) {
             var replaced;
             if (_.has(setting, 'replacement')) {
-                replaced = (_.isFunction(setting.replacement)) ?
-                    setting.replacement(fileParam, execResult) :
-                    setting.replacement;
+                const setting1 = setting;
+                replaced = (_.isFunction(setting1.replacement)) ?
+                    setting1.replacement(fileParam, execResult) :
+                    setting1.replacement;
             }
             else {
                 replaced = _.isFunction(setting) ? JSON.stringify(setting(fileParam, execResult)) :
                     JSON.stringify(setting);
             }
-            return type === 'imp' ? {
+            return type === ReplaceType.imp ? {
                 replaceAll: true,
-                code: toAssignment(astInfo, replaced)
+                code: parse_esnext_import_1.toAssignment(astInfo, replaced)
             } : replaced;
         }
         return null;
@@ -159,18 +201,19 @@ let replaceActions = {
         var replaced = setting;
         if (_.isFunction(setting))
             replaced = setting(fileParam, execResult);
-        return type === 'imp' ? {
+        return type === ReplaceType.imp ? {
             replaceAll: true,
-            code: toAssignment(astInfo, replaced)
+            code: parse_esnext_import_1.toAssignment(astInfo, replaced)
         } : replaced;
     },
     variable(setting, type, fileParam, execResult, astInfo) {
-        if (type === 'rq' || type === 'ima')
+        if (type === ReplaceType.rq || type === ReplaceType.ima) {
             return setting;
-        if (type === 'imp')
+        }
+        if (type === ReplaceType.imp)
             return {
                 replaceAll: true,
-                code: toAssignment(astInfo, setting)
+                code: parse_esnext_import_1.toAssignment(astInfo, setting)
             };
         return null;
     }
@@ -180,7 +223,7 @@ let replaceActions = {
     // }
 };
 let injectActions = {
-    factory: function (setting, calleeModuleId, calleeModule, requireCall, subPath) {
+    factory(setting, calleeModuleId, calleeModule, requireCall, subPath) {
         if (_.isFunction(setting)) {
             return setting(calleeModuleId);
         }
@@ -188,65 +231,53 @@ let injectActions = {
             return setting;
         }
     },
-    value: function (setting, calleeModuleId, calleeModule, requireCall, subPath) {
+    value(setting, calleeModuleId, calleeModule, requireCall, subPath) {
         if (_.has(setting, 'value'))
             return setting.value;
         else
             return setting;
     },
-    replaceCode: function (setting, calleeModuleId, calleeModule, requireCall, subPath) {
+    replaceCode(setting, calleeModuleId, calleeModule, requireCall, subPath) {
+        // tslint:disable-next-line:no-console
         console.log('require-injector does not support "replaceCode()" for NodeJS environment');
     },
-    substitute: function (setting, calleeModuleId, calleeModule, requireCall, subPath) {
+    substitute(setting, calleeModuleId, calleeModule, requireCall, subPath) {
         return requireCall.call(calleeModule, setting + subPath);
     },
-    variable: function (setting, calleeModuleId, calleeModule, requireCall, subPath) {
+    variable(setting, calleeModuleId, calleeModule, requireCall, subPath) {
         return setting;
     }
 };
-FactoryMap.prototype.getInjector = FactoryMap.prototype.matchRequire;
-FactoryMap.METHODS.forEach(function (mName) {
-    /**
-     * @param name {string | RegExp}
-     */
-    let prot = FactoryMap.prototype;
-    prot[mName] = function (name, value) {
-        if (_.isRegExp(name)) {
-            this.regexSettings.push({
-                regex: name,
-                method: mName,
-                value: value,
-                subPath: '',
-                prefix: ''
-            });
-        }
-        else {
-            this.requireMap[name] = {
-                method: mName,
-                value: value,
-                subPath: '',
-                prefix: ''
-            };
-        }
-        return this;
-    };
-});
-FactoryMap.prototype.alias = FactoryMap.prototype.substitute;
 class FactoryMapCollection {
     constructor(maps) {
         this.maps = maps;
     }
+    factory(requiredModule, factoryFunc) {
+        return this._addSetting('factory', requiredModule, factoryFunc);
+    }
+    substitute(requiredModule, newModule) {
+        return this._addSetting('substitute', requiredModule, newModule);
+    }
+    value(requiredModule, newModule) {
+        return this._addSetting('value', requiredModule, newModule);
+    }
+    swigTemplateDir(requiredModule, dir) {
+        return this._addSetting('swigTemplateDir', requiredModule, dir);
+    }
+    replaceCode(requiredModule, newModule) {
+        return this._addSetting('replaceCode', requiredModule, newModule);
+    }
+    alias(requiredModule, newModule) {
+        return this._addSetting('substitute', requiredModule, newModule);
+    }
+    _addSetting(method, requiredModule, newModule) {
+        for (const factoryMap of this.maps) {
+            factoryMap._addSetting(method, requiredModule, newModule);
+        }
+        return this;
+    }
 }
 exports.FactoryMapCollection = FactoryMapCollection;
-FactoryMap.METHODS.forEach(function (method) {
-    FactoryMapCollection.prototype[method] = function () {
-        this.maps.forEach((factoryMap) => {
-            factoryMap[method].apply(factoryMap, arguments);
-        });
-        return this;
-    };
-});
-FactoryMapCollection.prototype.alias = FactoryMapCollection.prototype.substitute;
 function lookupPath(name, paths) {
     // todo
     return null;

@@ -1,11 +1,13 @@
+// tslint:disable:max-line-length
 import * as ts from 'typescript';
 import * as fs from 'fs';
 import * as Path from 'path';
 import * as _ from 'lodash';
 import {ParseInfo} from './parse-esnext-import';
-import {FactoryMap} from './factory-map';
+import {FactoryMap, ReplaceType, ReplacedResult} from './factory-map';
+import patchText from './patch-text';
+import ReplaceRequire from './replace-require';
 
-var patchText = require('../lib/patch-text.js');
 export function parseTs(file: string) {
 	// let source = fs.readFileSync(Path.resolve(__dirname, '../../ts/spec/test-ts.txt'), 'utf8');
 	let source = fs.readFileSync(Path.resolve(file), 'utf8');
@@ -13,35 +15,37 @@ export function parseTs(file: string) {
 		ts.ScriptTarget.ES2015);
 	traverse(sFile);
 	function traverse(ast: ts.Node, level = 0) {
+		// tslint:disable-next-line:no-console
 		console.log(_.repeat(' |- ', level) + ts.SyntaxKind[ast.kind]);
 		if (ast.kind === ts.SyntaxKind.ImportDeclaration) {
+			// tslint:disable-next-line:no-console
 			console.log('found import statement', ast.getText(sFile));
-			debugger;
 		}
-		let count = 0;
+		// let count = 0;
 		ast.forEachChild((sub: ts.Node) => {
 			traverse(sub, level + 1);
-			count++;
+			// count++;
 		});
-		if (count === 0) {
-			console.log(_.repeat(' |- ', level + 1), `"${source.substring(ast.getStart(sFile), ast.getEnd())}"`);
-		}
+		// if (count === 0) {
+		// tslint:disable-next-line:no-console
+		console.log(_.repeat(' |- ', level + 1), `"${ast.getText(sFile)}"`);
+		// }
 	}
 }
 
 export class TypescriptParser {
 	srcfile: ts.SourceFile;
-	constructor(public esReplacer: any = null) {}
 
-	private _addPatch: (start: number, end: number, moduleName: string, replaceType: string) => void;
+	private _addPatch: (start: number, end: number, moduleName: string, replaceType: ReplaceType) => void;
 	private _addPatch4Import: (allStart: number, allEnd: number, start: number, end: number,
 		moduleName: string, info: ParseInfo) => void;
+	constructor(public esReplacer: ReplaceRequire = null) {}
 
 	replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile): string | null {
-		let patches: {start: number, end: number, replacement: string}[] = [];
+		let patches: Array<{start: number, end: number, replacement: string}> = [];
 		let self = this;
 		factoryMaps = [].concat(factoryMaps);
-		this._addPatch = function(start: number, end: number, moduleName: string, replaceType: string) {
+		this._addPatch = function(start: number, end: number, moduleName: string, replaceType: ReplaceType) {
 			if (! this.esReplacer)
 				return;
 			this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, filePath);
@@ -51,7 +55,7 @@ export class TypescriptParser {
 			_.some(factoryMaps, (factoryMap: FactoryMap) => {
 				var setting = factoryMap.matchRequire(info.from);
 				if (setting) {
-					var replacement = factoryMap.getReplacement(setting, 'imp', filePath, info);
+					var replacement = factoryMap.getReplacement(setting, ReplaceType.imp, filePath, info) as ReplacedResult;
 					if (replacement != null) {
 						patches.push({
 							start: replacement.replaceAll ? allStart : start,
@@ -71,7 +75,7 @@ export class TypescriptParser {
 		return patches.length > 0 ? patchText(code, patches) : null;
 	}
 
-	parseTsSource(source: string, file: string, ast?: ts.SourceFile): void{
+	parseTsSource(source: string, file: string, ast?: ts.SourceFile): void {
 		this.srcfile = ast || ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
 			false, ts.ScriptKind.TSX);
 		for(let stm of this.srcfile.statements) {
@@ -93,9 +97,9 @@ export class TypescriptParser {
 			}
 			if (_.get(node, 'importClause.namedBindings')) {
 				let nb = node.importClause.namedBindings;
-				if (nb.kind === SyntaxKind.NamespaceImport)
+				if (nb.kind === SyntaxKind.NamespaceImport) {
 					parseInfo.namespaceVar = nb.name.text;
-				else {
+				} else {
 					nb.elements.forEach(element => {
 						parseInfo.vars[element.name.text] = element.propertyName ? element.propertyName.text : element.name.text;
 					});
@@ -111,11 +115,11 @@ export class TypescriptParser {
 				(node.expression as ts.Identifier).text === 'require' &&
 				node.arguments[0].kind === SyntaxKind.StringLiteral) {
 				// console.log('Found', getTextOf(node, srcfile));
-				this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, 'rq');
+				this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, ReplaceType.rq);
 				return;
 			} else if (node.expression.kind === SyntaxKind.ImportKeyword) {
 				// console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
-				this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, 'ima');
+				this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, ReplaceType.ima);
 				return;
 			} else if (node.expression.kind === SyntaxKind.PropertyAccessExpression) {
 				let left = (node.expression as ts.PropertyAccessExpression).expression;
@@ -124,8 +128,8 @@ export class TypescriptParser {
 				right.kind === SyntaxKind.Identifier && (right as ts.Identifier).text === 'ensure') {
 					node.arguments.forEach((arg) => {
 						if (arg.kind === SyntaxKind.StringLiteral) {
-							this._addPatch(arg.getStart(this.srcfile, false), arg.getEnd(), (arg as ts.StringLiteral).text, 'rs');
-							console.log(`replace require.ensure(${(arg as ts.StringLiteral).text})`);
+							this._addPatch(arg.getStart(this.srcfile, false), arg.getEnd(), (arg as ts.StringLiteral).text, ReplaceType.rs);
+							// console.log(`replace require.ensure(${(arg as ts.StringLiteral).text})`);
 						}
 					});
 					// console.log('Found require.ensure()', node.arguments.map(arg => (arg as any).text));
@@ -137,7 +141,3 @@ export class TypescriptParser {
 		});
 	}
 }
-
-// function getTextOf(ast: ts.Node, srcfile: ts.SourceFile): string {
-// 	return srcfile.text.substring(ast.getStart(this.srcfile, false), ast.getEnd());
-// }

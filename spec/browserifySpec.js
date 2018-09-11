@@ -15,7 +15,7 @@ describe('Browserify', function() {
 });
 
 function test(entryFile, containedStr, done) {
-	copyToNodeModules();
+	// copyToNodeModules();
 	var proc = spawn(Path.resolve('node_modules/.bin/browserify' + (process.platform === 'win32' ? '.cmd' : '')), [
 		entryFile, '--global-transform', '[', 'require-injector/transform',
 		'--inject', 'browserifyInjector.js', ']'
@@ -51,9 +51,9 @@ function cleanup() {
 	shell.rm('-rf', 'bundle.js spec/node_modules/require-injector');
 }
 
-function copyToNodeModules() {
-	shell.mkdir('-p', 'spec/node_modules/require-injector');
-	shell.cp('-r', 'lib', 'transform.js', 'index.js', 'css-loader.js',
-		'spec/node_modules/require-injector/');
-	shell.cp('package.json', 'spec/node_modules/require-injector/');
-}
+// function copyToNodeModules() {
+// 	shell.mkdir('-p', 'spec/node_modules/require-injector');
+// 	shell.cp('-r', 'lib', 'transform.js', 'index.js', 'css-loader.js',
+// 		'spec/node_modules/require-injector/');
+// 	shell.cp('package.json', 'spec/node_modules/require-injector/');
+// }

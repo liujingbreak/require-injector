@@ -36,7 +36,7 @@ export class ParseExportInfo {
 	from: string = null;
 }
 
-export function parse(ast: any): ParseInfo{
+export function parse(ast: any): ParseInfo {
 	var res: ParseInfo = new ParseInfo();
 	ast.specifiers.forEach(function(speci: any) {
 		if (speci.type === 'ImportDefaultSpecifier') {

@@ -16,9 +16,9 @@ export class DirTree<T> {
 		tree.data = data;
 	}
 
-	getData(path: string) {
+	getData(path: string): T {
 		var tree = this.findNode(path);
-		return tree ? tree.data : tree;
+		return tree ? tree.data : null;
 	}
 
 	/**
@@ -60,7 +60,7 @@ export class DirTree<T> {
 			if (_.has(tree, ['map', name])) {
 				tree = tree.map[name];
 			} else {
-				var child = {map: {}, name: name};
+				var child = {map: {}, name};
 				tree.map[name] = child;
 				tree = child;
 			}
@@ -103,4 +103,4 @@ export class DirTree<T> {
 		});
 		return isRoot ? lines.join('\n') : lines;
 	}
-};
+}

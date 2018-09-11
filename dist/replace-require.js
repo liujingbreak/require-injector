@@ -1,0 +1,258 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const patch_text_1 = require("./patch-text");
+const factory_map_1 = require("./factory-map");
+const node_inject_1 = require("./node-inject");
+const _ = require("lodash");
+var acorn = require('acorn');
+var estraverse = require('estraverse-fb');
+var acornjsx = require('acorn-jsx/inject')(acorn);
+var acornImpInject = require('acorn-dynamic-import/lib/inject').default;
+const through = require("through2");
+var { parse: parseEs6Import, parseExport } = require('../dist/parse-esnext-import');
+const parse_ts_import_1 = require("./parse-ts-import");
+var log = require('@log4js-node/log4js-api').getLogger('require-injector.replace-require');
+acornjsx = acornImpInject(acornjsx);
+function replace(code, factoryMaps, fileParam, ast) {
+    return new ReplaceRequire().replace(code, factoryMaps, fileParam, ast);
+    // return ReplaceRequire.prototype.replace.apply(new ReplaceRequire(), arguments);
+}
+exports.replace = replace;
+module.exports.parseCode = parseCode;
+class ReplaceRequire extends node_inject_1.default {
+    /**
+     * opts.enableFactoryParamFile `true` if you need "filePath" as parameter for .factory(factory(filePath) {...})
+     * 	this will expose original source file path in code, default is `false`.
+     */
+    constructor(opts) {
+        super(opts);
+        if (!(this instanceof ReplaceRequire)) {
+            return new ReplaceRequire(opts);
+        }
+        var self = this;
+        this.tsParser = new parse_ts_import_1.TypescriptParser(this);
+        this.transform = function (file) {
+            if (!_.endsWith(file, '.js')) {
+                return through();
+            }
+            var data = '';
+            return through(write, end);
+            function write(buf, enc, next) {
+                data += buf;
+                next();
+            }
+            function end(next) {
+                this.push(self.injectToFile(file, data));
+                next();
+            }
+        };
+    }
+    cleanup() {
+        this.removeAllListeners('replace');
+        super.cleanup();
+    }
+    /**
+     * Here "inject" is actually "replacement".
+     Parsing a matched file to Acorn AST tree, looking for matched `require(module)` expression and replacing
+      them with proper values, expression.
+     * @name injectToFile
+     * @param  {string} filePath file path
+     * @param  {string} code     content of file
+     * @param  {object} ast      optional, if you have already parsed code to AST tree, pass it to this function which
+     *  helps to speed up process by skip parsing again.
+     * @return {string}          replaced source code, if there is no injectable `require()`,
+     * 	same source code will be returned.
+     */
+    injectToFile(filePath, code, ast) {
+        var factoryMaps;
+        try {
+            factoryMaps = this.factoryMapsForFile(filePath);
+            var replaced = null;
+            if (factoryMaps.length > 0) {
+                if (/\.tsx?$/.test(filePath)) {
+                    replaced = this.tsParser.replace(code, factoryMaps, filePath, ast);
+                }
+                else
+                    replaced = this.replace(code, factoryMaps, filePath, ast);
+                if (replaced != null)
+                    return replaced;
+            }
+            return code;
+        }
+        catch (e) {
+            log.error('filePath: ' + filePath);
+            log.error(_.map(factoryMaps, factoryMap => factoryMap.requireMap).join());
+            log.error(e.stack);
+            throw e;
+        }
+    }
+    /**
+     * @return null if there is no change
+     */
+    replace(code, fm, fileParam, ast) {
+        const factoryMaps = [].concat(fm);
+        var self = this;
+        if (!ast) {
+            ast = parseCode(code);
+            self.emit('ast', ast);
+        }
+        var patches = [];
+        estraverse.traverse(ast, {
+            enter(node, parent) {
+                if (node.type === 'CallExpression') {
+                    var calleeType = _.get(node, 'callee.type');
+                    var callee = node.callee;
+                    if (calleeType === 'Import') {
+                        self.onImportAsync(node, factoryMaps, fileParam, patches);
+                    }
+                    if (calleeType === 'Identifier') {
+                        var funcName = _.get(node, 'callee.name');
+                        if (funcName === 'require')
+                            self.onRequire(node, factoryMaps, fileParam, patches);
+                        else if (funcName === 'import')
+                            self.onImportAsync(node, factoryMaps, fileParam, patches);
+                    }
+                    else if (calleeType === 'MemberExpression' &&
+                        callee.object.name === 'require' &&
+                        callee.object.type === 'Identifier' &&
+                        callee.property.name === 'ensure' &&
+                        callee.property.type === 'Identifier') {
+                        self.onRequireEnsure(node, factoryMaps, fileParam, patches);
+                    }
+                }
+                else if (node.type === 'ImportDeclaration') {
+                    self.onImport(node, factoryMaps, fileParam, patches);
+                }
+                else if ((node.type === 'ExportNamedDeclaration' && node.source) ||
+                    (node.type === 'ExportAllDeclaration' && node.source)) {
+                    // self.onExport(node, factoryMaps, fileParam, patches);
+                    // TODO: support `export ... from ...`
+                }
+            },
+            leave(node, parent) {
+            },
+            keys: {
+                Import: [], JSXText: []
+            }
+        });
+        if (patches.length > 0)
+            return patch_text_1.default(code, patches);
+        else
+            return null;
+    }
+    onImport(node, factoryMaps, fileParam, patches) {
+        var info = parseEs6Import(node);
+        var self = this;
+        _.some(factoryMaps, factoryMap => {
+            var setting = factoryMap.matchRequire(info.from);
+            if (setting) {
+                var replacement = factoryMap.getReplacement(setting, factory_map_1.ReplaceType.imp, fileParam, info);
+                if (replacement != null) {
+                    patches.push({
+                        start: replacement.replaceAll ? node.start : node.source.start,
+                        end: replacement.replaceAll ? node.end : node.source.end,
+                        replacement: replacement.code
+                    });
+                    self.emit('replace', info.from, replacement.code);
+                }
+                return true;
+            }
+            return false;
+        });
+    }
+    onExport(node, factoryMaps, fileParam, patches) {
+        var info = parseExport(node);
+        var self = this;
+        _.some(factoryMaps, factoryMap => {
+            var setting = factoryMap.matchRequire(info.from);
+            if (setting) {
+                var replacement = factoryMap.getReplacement(setting, factory_map_1.ReplaceType.imp, fileParam, info);
+                if (replacement != null) {
+                    patches.push({
+                        start: replacement.replaceAll ? node.start : node.source.start,
+                        end: replacement.replaceAll ? node.end : node.source.end,
+                        replacement: replacement.code
+                    });
+                    self.emit('replace', info.from, replacement.code);
+                }
+                return true;
+            }
+            return false;
+        });
+    }
+    onImportAsync(node, factoryMaps, fileParam, patches) {
+        var old = _.get(node, 'arguments[0].value');
+        this.addPatch(patches, node.start, node.end, old, factory_map_1.ReplaceType.ima, factoryMaps, fileParam);
+    }
+    onRequire(node, factoryMaps, fileParam, patches) {
+        var calleeType = _.get(node, 'callee.type');
+        if (calleeType === 'Identifier' &&
+            _.get(node, 'callee.name') === 'require') {
+            var old = _.get(node, 'arguments[0].value');
+            this.addPatch(patches, node.start, node.end, old, factory_map_1.ReplaceType.rq, factoryMaps, fileParam);
+        }
+    }
+    onRequireEnsure(node, factoryMaps, fileParam, patches) {
+        var self = this;
+        var args = node.arguments;
+        if (args.length === 0) {
+            return;
+        }
+        if (args[0].type === 'ArrayExpression') {
+            args[0].elements.forEach((nameNode) => {
+                if (nameNode.type !== 'Literal') {
+                    log.error('require.ensure() should be called with String literal');
+                    return;
+                }
+                var old = nameNode.value;
+                self.addPatch(patches, nameNode.start, nameNode.end, old, factory_map_1.ReplaceType.rs, factoryMaps, fileParam);
+            });
+        }
+        else if (args[0].type === 'Literal') {
+            var old = _.get(node, 'arguments[0].value');
+            self.addPatch(patches, args[0].start, args[0].end, old, factory_map_1.ReplaceType.rs, factoryMaps, fileParam);
+        }
+    }
+    addPatch(patches, start, end, moduleName, replaceType, fmaps, fileParam) {
+        var self = this;
+        var setting;
+        for (const factoryMap of fmaps) {
+            setting = factoryMap.matchRequire(moduleName);
+            if (setting) {
+                var replacement = factoryMap.getReplacement(setting, replaceType, fileParam);
+                if (replacement != null) {
+                    patches.push({
+                        start,
+                        end,
+                        replacement: typeof (replacement) === 'string' ? replacement : replacement.code
+                    });
+                    self.emit('replace', moduleName, replacement);
+                }
+                break;
+            }
+        }
+    }
+}
+exports.default = ReplaceRequire;
+function parseCode(code) {
+    var ast;
+    var firstCompileErr = null;
+    try {
+        ast = acornjsx.parse(code, { allowHashBang: true, sourceType: 'module', plugins: { jsx: true, dynamicImport: true } });
+    }
+    catch (err) {
+        firstCompileErr = err;
+        try {
+            ast = acornjsx.parse(code, { allowHashBang: true, plugins: { jsx: true, dynamicImport: true } });
+        }
+        catch (err2) {
+            log.error('Possible ES compilation error', firstCompileErr);
+            firstCompileErr.message += '\nOr ' + err2.message;
+            firstCompileErr.stack += '\nAnother possible compilation error is\n' + err2.stack;
+            throw firstCompileErr;
+        }
+    }
+    return ast;
+}
+exports.parseCode = parseCode;
+//# sourceMappingURL=replace-require.js.map

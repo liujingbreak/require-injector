@@ -357,13 +357,13 @@ require-injector extends Node `Events` module.
 #### "inject" event
 Emitted when a Node module is matched to be injected with something.
 ```js
-rj.on('inject', moduleId => {});
+rj.getInstance().on('inject', moduleId => {});
 ```
 
 #### "replace" event
 Emitted when `injectToFile` is called on injector.
 ```js
-rj.on('replace', (moduleName: string, replacement: string) => {});
+rj.getInstance().on('replace', (moduleName: string, replacement: string) => {});
 ```
 #### "ast" event
 In replacement mode, requir-injector use Acorn or Typescript engine to parse JS/JSX, TS/TSX file into AST object, if you want to reuse this AST object, add listerner to this event
@@ -432,7 +432,7 @@ var rjReplace = rj({noNode: true});
 rjReplace.fromPackage([packageA...])
 	.replaceCode('foobar', JSON.stringify({foo: 'bar'}));
 ```
-Which takes "`var foobar = require('foobar');"` with replaced:
+In which "`var foobar = require('foobar');"` is replaced with:
 ```js
 var  foobar = {"foo": "bar"};
 ```

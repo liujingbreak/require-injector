@@ -12,7 +12,7 @@ class DirTree {
     }
     getData(path) {
         var tree = this.findNode(path);
-        return tree ? tree.data : tree;
+        return tree ? tree.data : null;
     }
     /**
      * @return Array of data
@@ -53,7 +53,7 @@ class DirTree {
                 tree = tree.map[name];
             }
             else {
-                var child = { map: {}, name: name };
+                var child = { map: {}, name };
                 tree.map[name] = child;
                 tree = child;
             }
@@ -96,5 +96,4 @@ class DirTree {
     }
 }
 exports.DirTree = DirTree;
-;
 //# sourceMappingURL=dir-tree.js.map

@@ -1,4 +1,3 @@
-var rr = require('..').replace;
 var rj = require('..');
 var Path = require('path');
 var fs = require('fs');
@@ -6,6 +5,10 @@ var _ = require('lodash');
 var {FactoryMap} = require('../dist/factory-map');
 const vm = require('vm');
 
+const replacer = rj();
+function rr() {
+	return replacer.replace.apply(replacer, arguments);
+}
 describe('replace-require', ()=> {
 	describe('ES6 import', ()=> {
 		it('replaceCode() should work with import * ....', () => {
@@ -114,7 +117,7 @@ describe('replace-require', ()=> {
 		it('should work for sample2', function() {
 			var fm = new FactoryMap();
 			fm.value('hellow', {replacement: ''})
-			.variable('a', 'b');
+			.replaceCode('a', 'b');
 			var result = rr('require("hellow");require("a");require("hellow");var s = require("b");',
 				fm);
 
@@ -124,7 +127,7 @@ describe('replace-require', ()=> {
 		it('should work for sample3', function() {
 			var fm = new FactoryMap();
 			fm.value('hellow', {replacement: ''})
-			.variable('a', 'b');
+			.replaceCode('a', 'b');
 			var result = rr('require("hellow");obj.require("a");', fm);
 
 			expect(result).toBe(';obj.require("a");');
@@ -252,9 +255,9 @@ describe('replace-require', ()=> {
 
 		it('.substitute() should work for sample module1', ()=> {
 			var onReplace = jasmine.createSpy('onReplace');
-			rj.on('replace', onReplace);
+			rj.getInstance().on('replace', onReplace);
 			var file = Path.resolve(__dirname, 'node_modules/module1/index.js');
-			var result = rj.injectToFile(file, fs.readFileSync(file, 'utf8'));
+			var result = rj.getInstance().injectToFile(file, fs.readFileSync(file, 'utf8'));
 			expect(_.trim(result)).toBe('module.exports = \'module1 \' + require("aaa");');
 			expect(onReplace.calls.count()).toBe(1);
 			console.log('onReplace(): ', onReplace.calls.allArgs())
@@ -297,6 +300,7 @@ describe('replace-require', ()=> {
 			rj.fromDir(['dir1', 'dir2'])
 				.substitute('A', 'aaa')
 				.value('B', 'shouldnotBeReplaced');
+			console.log(rj.getInstance());
 		});
 		it('.substitute() should work', function() {
 			var result = rj.injectToFile(Path.resolve(__dirname, 'dir1/testRequireEnsure.js'),

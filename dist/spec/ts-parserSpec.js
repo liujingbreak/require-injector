@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// tslint:disable:no-console
 // import * as ts from 'typescript';
 const fs = require("fs");
 const Path = require("path");
@@ -8,10 +9,10 @@ const vm = require("vm");
 const parse_ts_import_1 = require("../parse-ts-import");
 const factory_map_1 = require("../factory-map");
 const EsReplacer = require('../../lib/replace-require');
-describe("TypescriptParser", () => {
+describe('TypescriptParser', () => {
     let file = Path.resolve(__dirname, '../../ts/spec/test-ts.txt');
     let source = fs.readFileSync(file, 'utf8');
-    let fm = new factory_map_1.FactoryMap().asInterface();
+    let fm = new factory_map_1.FactoryMap();
     fm.alias('lodash', 'underscore');
     fm.replaceCode('__api', (file) => {
         if (file.endsWith('.ts'))
@@ -21,7 +22,7 @@ describe("TypescriptParser", () => {
     fm.alias('asyncModule', '_asyncModule_');
     fm.alias('yyy', '_yyy_');
     var replaced;
-    it("can replace 'import' and 'require' statements ", () => {
+    it('can replace \'import\' and \'require\' statements ', () => {
         replaced = new parse_ts_import_1.TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
         console.log('---------------\n%s\n--------------', replaced);
         expect(/var __imp[0-9]__ = API, api = __imp[0-9]__\["default"\];/.test(replaced)).toBeTruthy();
@@ -34,7 +35,7 @@ describe("TypescriptParser", () => {
     });
     it('replaceCode should work with import * ....', () => {
         let source = 'import * as _ from \'lodash\';';
-        let fm = new factory_map_1.FactoryMap().asInterface();
+        let fm = new factory_map_1.FactoryMap();
         fm.replaceCode('lodash', '"hellow"');
         replaced = new parse_ts_import_1.TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
         var sandbox = {
@@ -47,7 +48,7 @@ describe("TypescriptParser", () => {
     });
     it('replaceCode should work with import "foobar"', () => {
         let source = 'import \'lodash\';';
-        let fm = new factory_map_1.FactoryMap().asInterface();
+        let fm = new factory_map_1.FactoryMap();
         fm.replaceCode('lodash', 'foobar()');
         replaced = new parse_ts_import_1.TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
         expect(replaced).toMatch(/\s*foobar\(\);$/);

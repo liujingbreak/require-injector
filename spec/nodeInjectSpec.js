@@ -69,11 +69,11 @@ describe('node-injector', () => {
 
 		it('.dirTree should contains configured packages and', ()=> {
 			rj.fromDir('spec/link');
-			console.log(rj.testable().dirTree.traverse());
-			var fm = rj.testable().dirTree.getData(Path.resolve(__dirname, 'link'));
+			console.log(rj.getInstance().testable().dirTree.traverse());
+			var fm = rj.getInstance().testable().dirTree.getData(Path.resolve(__dirname, 'link'));
 			expect(fm).not.toBe(null);
 			console.log(require.resolve('module1'));
-			fm = rj.testable().dirTree.getAllData(require.resolve('module1'));
+			fm = rj.getInstance().testable().dirTree.getAllData(require.resolve('module1'));
 			expect(fm.length).not.toBe(0);
 		});
 
@@ -91,15 +91,15 @@ describe('node-injector', () => {
 		xit('browser resolve function should work as parameter for .fromePackage()', function() {
 			rj.cleanup();
 			rj();
-			expect(rj.testable().sortedDirs.length).toBe(0);
+			expect(rj.getInstance().testable().sortedDirs.length).toBe(0);
 			rj.fromPackage('module1', bresolve, {
 				paths: [__dirname + '/node_modules']
 			}).value('abc', 'ABC');
 			rj.fromPackage('@br/browser-module', bresolve, {
 				paths: [__dirname + '/node_modules']
 			}).value('abc', 'ABC');
-			console.log(rj.testable().sortedDirs);
-			expect(rj.testable().sortedDirs.length).toBe(2);
+			console.log(rj.getInstance().testable().sortedDirs);
+			expect(rj.getInstance().testable().sortedDirs.length).toBe(2);
 		});
 
 		it('browser resolve function should work as global options', function() {
@@ -110,11 +110,11 @@ describe('node-injector', () => {
 					paths: [__dirname + '/node_modules']
 				}
 			});
-			//expect(rj.testable().sortedDirs.length).toBe(0);
+			//expect(rj.getInstance().testable().sortedDirs.length).toBe(0);
 			rj.fromPackage('module1').value('abc', 'ABC');
 			rj.fromPackage('@br/browser-module').value('abc', 'ABC');
-			console.log(rj.testable().dirTree.traverse());
-			//expect(rj.testable().sortedDirs.length).toBe(2);
+			console.log(rj.getInstance().testable().dirTree.traverse());
+			//expect(rj.getInstance().testable().sortedDirs.length).toBe(2);
 		});
 
 		it('should be chainable', ()=>{
@@ -237,8 +237,8 @@ describe('node-injector', () => {
 
 			rj.fromDir('spec/a');
 			rj.fromPackage('module2');
-			var foundDir = rj.testable().quickSearchDirByFile(Path.resolve(__dirname, 'dir1_2/test12.js'));
-			console.log(rj.testable().sortedDirs);
+			var foundDir = rj.getInstance().testable().quickSearchDirByFile(Path.resolve(__dirname, 'dir1_2/test12.js'));
+			console.log(rj.getInstance().testable().sortedDirs);
 			expect(foundDir).toBe(Path.resolve(__dirname, 'dir1_2').replace(/\\/g, '/') + '/');
 		});
 	});
