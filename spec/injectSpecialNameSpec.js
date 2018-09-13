@@ -1,10 +1,10 @@
-var rj = require('..');
+var Rj = require('..').default;
+let rj = new Rj();
 var Path = require('path');
 var fs = require('fs');
 
 describe('Injected module name can contain slash', ()=> {
 	afterEach(() => {
-		rj.cleanup();
 		delete require.cache[require.resolve('module1')];
 		delete require.cache[require.resolve('module2')];
 		delete require.cache[require.resolve('module3')];
@@ -16,7 +16,7 @@ describe('Injected module name can contain slash', ()=> {
 	});
 
 	it('.value(path, value) should work for Node', ()=> {
-		rj({
+		rj = new Rj({
 			basedir: __dirname
 		});
 		rj.fromDir('dir1').value('module1/index', 'hellow');
@@ -25,7 +25,7 @@ describe('Injected module name can contain slash', ()=> {
 	});
 
 	it('.value(path, value) should work for replacement', ()=> {
-		rj({
+		rj = new Rj({
 			basedir: __dirname,
 			noNode: true
 		});

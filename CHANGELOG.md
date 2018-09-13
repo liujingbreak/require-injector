@@ -9,15 +9,15 @@ Rewrite lib/dir-tree.js in Typescript
 Rewrite all functional script with Typescript, fully support Typescript user.
 
 **Breaking changes**
-- The way to add event listener is changed to:
+- The way to get Injector instance.
 ```js
-const rj = require('require-inject');
-rj.getInstance().on('inject', moduleId => {});
+const Injector = require('require-inject').default;
+new INjector().on('inject', moduleId => {});
+
 ```
-or 
+or Typescript
 
 ```js
-const rj = require('require-inject');
-const injector = rj();
-injector.on('inject', moduleId => {});
+import Injector from 'require-inject';
+new INjector().on('inject', moduleId => {});
 ```

@@ -1,11 +1,12 @@
 {
   "name": "require-injector",
-  "version": "5.0.0-alpha.2",
+  "version": "5.0.0-alpha.4",
   "description": "Resolve and replacing require() function in both NodeJS and browser side CommonJS packing tool like Webpack and Browserify.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "loader": "webpack-loader",
   "scripts": {
+    "iii": "rm -rf spec/node_modules/require-injector ; mkdir spec/node_modules/require-injector ; cp -r lib spec/node_modules/require-injector/ ; cp -r dist spec/node_modules/require-injector/ ; cp *.js spec/node_modules/require-injector/ ; cp *.json spec/node_modules/require-injector/",
     "init": "rm -rf spec/node_modules/require-injector && mkdir spec/node_modules/require-injector && cp -r lib spec/node_modules/require-injector/ && cp -r dist spec/node_modules/require-injector/ && cp *.js spec/node_modules/require-injector/ && cp *.json spec/node_modules/require-injector/",
     "clean-win32": "rd /s/q spec\\node_modules\\require-injector",
     "init-win32": "xcopy lib spec\\node_modules\\require-injector\\ /s/h/e/k/f/c && xcopy ts spec\\node_modules\\require-injector\\ /s/h/e/k/f/c && xcopy dist spec\\node_modules\\require-injector\\ /s/h/e/k/f/c && copy *.js spec\\node_modules\\require-injector\\ && copy *.json spec\\node_modules\\require-injector\\",
@@ -58,7 +59,7 @@
     "resolve": "^1.1.7",
     "through2": "^2.0.3",
     "@types/jasmine": "^2.8.6",
-    "@types/node": "^9.4.0",
+    "@types/node": "^10.9.4",
     "@types/lodash": "^4.14.97",
     "@types/through2": "^2.0.34"
   },

@@ -16,10 +16,13 @@ describe('Browserify', function() {
 
 function test(entryFile, containedStr, done) {
 	// copyToNodeModules();
-	var proc = spawn(Path.resolve('node_modules/.bin/browserify' + (process.platform === 'win32' ? '.cmd' : '')), [
+	const command = Path.resolve('node_modules/.bin/browserify' + (process.platform === 'win32' ? '.cmd' : ''));
+	const args = [
 		entryFile, '--global-transform', '[', 'require-injector/transform',
 		'--inject', 'browserifyInjector.js', ']'
-	], {
+	];
+	console.log(`${command} ${args.join(' ')}`);
+	var proc = spawn(command, args, {
 		cwd: Path.resolve(__dirname)
 		//stdio: 'inherit'
 	});

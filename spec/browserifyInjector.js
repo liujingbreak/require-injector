@@ -1,4 +1,4 @@
-var rj = require('require-injector')({basedir: __dirname, noNode: true});
+var rj = require('require-injector').getInstance({basedir: __dirname, noNode: true});
 rj.fromDir('dir1')
 	.value('aaa', 'hellow')
 	.value('bbb', 'world');

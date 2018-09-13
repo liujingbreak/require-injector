@@ -6,5 +6,5 @@ module.exports = function(file, opts) {
 		throw new Error('require-injector/transform requires "injector" file as transform option');
 	}
 	require(Path.resolve(opts.inject).replace(/\\/g, '/'));
-	return rj.getInstance().transform.call(rj.getInstance(), file);
+	return rj.getInstance().transform(file);
 };

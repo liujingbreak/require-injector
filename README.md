@@ -13,42 +13,43 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 
 
 - [require-injector](#require-injector)
-- [Installation](#installation)
-- [Node project example](#node-project-example)
-	- [Injection for local files](#injection-for-local-files)
-	- [No relative path needed in require()](#no-relative-path-needed-in-require)
-	- [Injection for Node packages](#injection-for-node-packages)
-- [Browserify transform](#browserify-transform)
-- [Webpack loader](#webpack-loader)
-- [Webpack-like split loading module replacement: `require.ensure()`](#webpack-like-split-loading-module-replacement-requireensure)
-- [Replacement](#replacement)
-- [Solution for NodeJS and browser environment](#solution-for-nodejs-and-browser-environment)
-- [ES6 Import syntax and import async syntax](#es6-import-syntax-and-import-async-syntax)
-- [Injection for server side Swig template](#injection-for-server-side-swig-template)
-- [Injector API](#injector-api)
-	- [require('require-injector')( `{object}` opts )](#requirerequire-injector-object-opts-)
-		- [Parameters](#parameters)
-	- [fromPackage( `{string|array}` nodePackageName, `{function}` resolve, `{object}` opts)](#frompackage-stringarray-nodepackagename-function-resolve-object-opts)
-		- [Parameters](#parameters-1)
-	- [fromDir( `{string|array}` directory)](#fromdir-stringarray-directory)
-		- [Parameters](#parameters-2)
-	- [transform(filePath)](#transformfilepath)
-	- [injectToFile(`{string}` filePath, `{string}` code, `{object}` ast)](#injecttofilestring-filepath-string-code-object-ast)
-		- [Parameters](#parameters-3)
-	- [cleanup()](#cleanup)
-- [Events](#events)
-	- ["inject" event](#inject-event)
-	- ["replace" event](#replace-event)
-	- ["ast" event](#ast-event)
-- [FactoryMap API](#factorymap-api)
-	- [substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
-	- [alias(`{string}` requiredModuleName, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
-	- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
-		- [Parameters](#parameters-5)
-	- [replaceCode(`{string|RegExp}` moduleName, `{string | function}` jsCode)](#replacecodestringregexp-modulename-string--function-jscode)
-	- [value(`{string|RegExp}` requiredModule, `{*|function}` value)](#valuestringregexp-requiredmodule-function-value)
-		- [Parameters](#parameters-6)
-	- [swigTemplateDir(`{string}` packageName, `{string}` dir)](#swigtemplatedirstring-packagename-string-dir)
+		- [Installation](#installation)
+		- [Node project example](#node-project-example)
+			- [Injection for local files](#injection-for-local-files)
+			- [No relative path needed in require()](#no-relative-path-needed-in-require)
+			- [Injection for Node packages](#injection-for-node-packages)
+		- [Browserify transform](#browserify-transform)
+		- [Webpack loader](#webpack-loader)
+		- [Webpack-like split loading module replacement: `require.ensure()`](#webpack-like-split-loading-module-replacement-requireensure)
+		- [Replacement](#replacement)
+		- [Solution for NodeJS and browser environment](#solution-for-nodejs-and-browser-environment)
+		- [ES6 Import syntax and import async syntax](#es6-import-syntax-and-import-async-syntax)
+		- [Support as Webapck loader to replace Typescript file](#support-as-webapck-loader-to-replace-typescript-file)
+		- [Injection for server side Swig template](#injection-for-server-side-swig-template)
+		- [Injector API](#injector-api)
+			- [require('require-injector')( `{object}` opts )](#requirerequire-injector-object-opts)
+				- [Parameters](#parameters)
+			- [fromPackage( `{string|array}` nodePackageName, `{function}` resolve, `{object}` opts)](#frompackage-stringarray-nodepackagename-function-resolve-object-opts)
+				- [Parameters](#parameters)
+			- [fromDir( `{string|array}` directory)](#fromdir-stringarray-directory)
+				- [Parameters](#parameters)
+			- [transform(filePath)](#transformfilepath)
+			- [injectToFile(`{string}` filePath, `{string}` code, `{object}` ast)](#injecttofilestring-filepath-string-code-object-ast)
+				- [Parameters](#parameters)
+			- [cleanup()](#cleanup)
+		- [Events](#events)
+			- ["inject" event](#%22inject%22-event)
+			- ["replace" event](#%22replace%22-event)
+			- ["ast" event](#%22ast%22-event)
+		- [FactoryMap API](#factorymap-api)
+			- [substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
+				- [Parameters](#parameters)
+			- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
+				- [Parameters](#parameters)
+			- [replaceCode(`{string|RegExp}` moduleName, `{string | function}` jsCode)](#replacecodestringregexp-modulename-string--function-jscode)
+			- [value(`{string|RegExp}` requiredModule, `{*|function}` value)](#valuestringregexp-requiredmodule-function-value)
+				- [Parameters](#parameters)
+			- [swigTemplateDir(`{string}` packageName, `{string}` dir)](#swigtemplatedirstring-packagename-string-dir)
 
 ### Installation
 ```
@@ -85,11 +86,19 @@ You can inject this `require('module1')` with the exports value from `module2`.
 
 In your entry js file app.js:
 ```js
-var rj = require('require-injector');
+const Injector = require('require-injector').default;
 
-rj({basedir: __dirname});
+let rj = new Injector({basedir: __dirname});
 rj.fromDir('src/dir1')
-	.substitute('module1', 'module2');
+  .substitute('module1', 'module2');
+```
+Or in Typescript
+```ts
+import Injector from 'require-injector';
+let rj = new Injector({basedir: __dirname});
+rj.fromDir('src/dir1')
+  .substitute('module1', 'module2');
+
 ```
 From then on, any file `require('module1')` will actually be requiring module2 instead.
 
@@ -104,8 +113,8 @@ rj.fromDir(['src/dir1', 'src/dir2'])
 You may don't need require messy relative path anymore. Image you have a common `utils` always be required by different feature folders. Same effect like [app-module-path](https://www.npmjs.com/package/app-module-path)
 ```js
 // In app.js
-var rj = require('require-injector');
-rj({basedir: __dirname});
+const Injector = require('require-injector').default;
+let rj = new Injector();
 rj.fromDir(['src/dir1', 'src/dir2']).factory('_utils', function() {
 	return require('./utils');
 });
@@ -125,7 +134,6 @@ Since v2.0.0
 hierarchical directors setting is supported. Injector setting can be configured on
 different level directories, lower level directory's setting takes precedence. 
 ```js
-rj({basedir: __dirname});
 rj.fromDir('src/dir1')
 	.substitute('module1', 'module2');
 rj.fromDir('src')
@@ -149,7 +157,8 @@ rj.fromPackage('module1', require('browser-resolve').sync)
 ### Browserify transform
 If you are packing files to browser side by Browserify,
 ```js
-rj({noNode: true});
+let Injector = require('require-injector').default;
+let rj = new Injector({noNode: true});
 rj.fromPackage('...')
 ...
 var browserify = require('browserify');
@@ -166,8 +175,7 @@ browserify entry.js --global-transform
 ```
 `inject.js` is where you initialize require-injector settings
 ```js
-var rj = require('require-injector');
-rj({noNode: true});
+var rj = require('require-injector').getInstance({noNode: true});
 
 rj.fromDir('folderA')
 	.value('moduleX', 'anotherPackage')
@@ -357,13 +365,13 @@ require-injector extends Node `Events` module.
 #### "inject" event
 Emitted when a Node module is matched to be injected with something.
 ```js
-rj.getInstance().on('inject', moduleId => {});
+rj.on('inject', moduleId => {});
 ```
 
 #### "replace" event
 Emitted when `injectToFile` is called on injector.
 ```js
-rj.getInstance().on('replace', (moduleName: string, replacement: string) => {});
+rj.on('replace', (moduleName: string, replacement: string) => {});
 ```
 #### "ast" event
 In replacement mode, requir-injector use Acorn or Typescript engine to parse JS/JSX, TS/TSX file into AST object, if you want to reuse this AST object, add listerner to this event
@@ -427,13 +435,14 @@ _returns_ chainable FactoryMap
 Arbitrary JS code replacement
 > Only work in replacement mode, not NodeJs side
 
-```js
-var rjReplace = rj({noNode: true});
+```ts
+import Injector from 'require-injector';
+var rjReplace = new Injector({noNode: true});
 rjReplace.fromPackage([packageA...])
 	.replaceCode('foobar', JSON.stringify({foo: 'bar'}));
 ```
 In which "`var foobar = require('foobar');"` is replaced with:
-```js
+```ts
 var  foobar = {"foo": "bar"};
 ```
 

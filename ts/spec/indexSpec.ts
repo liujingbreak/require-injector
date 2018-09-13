@@ -1,3 +1,5 @@
-import rj = require('../index');
+import Rj from '../index';
 
-rj();
+const injector = new Rj();
+
+injector.cleanup();
