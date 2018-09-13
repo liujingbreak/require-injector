@@ -1,21 +1,25 @@
-import Replacer, {RequireInjector} from './replace-require';
-import {InjectorOption, ResolveOption} from './node-inject';
+import Replacer, {RequireInjector as Rj} from './replace-require';
+import {InjectorOption as options, ResolveOption as Ro} from './node-inject';
 import {FactoryMapInterf} from './factory-map';
 import {Transform} from 'stream';
 
 let instance: Replacer;
 
-type InjectorDelegate = (option?: InjectorOption) => RequireInjector;
+type InjectorDelegate = (option?: options) => Rj;
 
-function delegate(option: InjectorOption): RequireInjector {
+function delegate(option: options): Rj {
 	instance = new Replacer(option);
 	return instance;
 }
 // tslint:disable-next-line:class-name
 interface delegate {
-	getInstance(): RequireInjector;
+	getInstance(): Rj;
 }
 namespace delegate {
+	export type RequireInjector = Rj;
+	export type InjectorOption = options;
+	export type ResolveOption = Ro;
+
 	export function getInstance() {
 		if (instance == null)
 			instance = new Replacer();
@@ -40,4 +44,4 @@ namespace delegate {
 	}
 }
 
-export = delegate as InjectorDelegate & RequireInjector;
+export = delegate as InjectorDelegate & Rj;
