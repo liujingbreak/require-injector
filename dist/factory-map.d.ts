@@ -160,8 +160,8 @@ check this out [swig-package-tmpl-loader injection](https://www.npmjs.com/packag
     alias(requiredModule: string | RegExp, newModule: string | FactoryFunc): FactoryMapInterf;
 }
 export declare class FactoryMapCollection implements FactoryMapInterf {
-    maps: FactoryMap[];
-    constructor(maps: FactoryMap[]);
+    maps: FactoryMapInterf[];
+    constructor(maps: FactoryMapInterf[]);
     factory(requiredModule: string | RegExp, factoryFunc: FactoryFunc): FactoryMapInterf;
     substitute(requiredModule: string | RegExp, newModule: string | FactoryFunc): FactoryMapInterf;
     value(requiredModule: string | RegExp, newModule: any | FactoryFunc): FactoryMapInterf;

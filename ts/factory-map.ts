@@ -428,8 +428,8 @@ let injectActions: InjectActions = {
 };
 
 export class FactoryMapCollection implements FactoryMapInterf {
-	maps: FactoryMap[];
-	constructor(maps: FactoryMap[]) {
+	maps: FactoryMapInterf[];
+	constructor(maps: FactoryMapInterf[]) {
 		this.maps = maps;
 	}
 	factory(requiredModule: string | RegExp, factoryFunc: FactoryFunc): FactoryMapInterf {
@@ -456,7 +456,7 @@ export class FactoryMapCollection implements FactoryMapInterf {
 	}
 	protected _addSetting(this: FactoryMapCollection, method: string, requiredModule: string | RegExp, newModule: string| FactoryFunc): FactoryMapInterf {
 		for (const factoryMap of this.maps) {
-			factoryMap._addSetting(method, requiredModule, newModule);
+			(factoryMap as FactoryMap)._addSetting(method, requiredModule, newModule);
 		}
 		return this;
 	}
