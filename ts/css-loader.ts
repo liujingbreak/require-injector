@@ -12,7 +12,7 @@ var rj = require('.');
  * This loader replaces all "import ... npm://"s with webpack's "import ... ~" style,
  * and works with require-injector to replace package.
  */
-export = function(content: string, sourcemap: any) {
+function loader(content: string, sourcemap: any) {
 	var callback = this.async();
 	if (!callback)
 		throw new Error('Must be used as async loader');
@@ -23,7 +23,7 @@ export = function(content: string, sourcemap: any) {
 		this.emitError(err);
 		callback(err);
 	});
-};
+}
 
 function loadAsync(content: string, loader: {resourcePath: string}, opts: {injector: Inject}) {
 	var file = loader.resourcePath;
@@ -38,7 +38,7 @@ function injectReplace(content: string, file: string, loader: {resourcePath: str
 		if (relPath == null)
 			relPath = '';
 		var packageResourcePath = packageName + relPath;
-		var newPackage = getInjectedPackage(file, packageResourcePath, opts ? opts.injector : null);
+		var newPackage = _getInjectedPackage(file, packageResourcePath, opts ? opts.injector : null);
 		if (newPackage) {
 			log.info(`Found injected less import target: ${packageResourcePath}, replaced to ${newPackage}`);
 			packageResourcePath = newPackage;
@@ -52,8 +52,6 @@ function injectReplace(content: string, file: string, loader: {resourcePath: str
 	return replaced;
 }
 
-module.exports.getInjectedPackage = getInjectedPackage;
-
 /**
  *
  * @param {*} file
@@ -61,7 +59,7 @@ module.exports.getInjectedPackage = getInjectedPackage;
  * @return {*} could be {string} for injected package name, {null} for no injection,
  * empty string for `replaceCode` with falsy value
  */
-function getInjectedPackage(file: string, origPackageName: string, injector: Inject): string {
+function _getInjectedPackage(file: string, origPackageName: string, injector: Inject): string {
 	if (!injector)
 		injector = rj;
 	const fmaps = injector.factoryMapsForFile(file);
@@ -90,3 +88,9 @@ function getInjectedPackage(file: string, origPackageName: string, injector: Inj
 	}
 	return replaced;
 }
+
+namespace loader {
+	export const getInjectedPackage = _getInjectedPackage;
+}
+
+export = loader;

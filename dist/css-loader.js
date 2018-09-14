@@ -3,6 +3,26 @@ const _ = require("lodash");
 const log = require('log4js').getLogger('require-injector.cssLoader');
 var lu = require('loader-utils');
 var rj = require('.');
+/**
+ * Some legacy LESS files reply on npm-import-plugin, which are using convention like
+ * "import 'npm://bootstrap/less/bootstrap';" to locate LESS file from node_modules,
+ * but with Webpack resolver, it changes to use `@import "~bootstrap/less/bootstrap";`.
+ *
+ * This loader replaces all "import ... npm://"s with webpack's "import ... ~" style,
+ * and works with require-injector to replace package.
+ */
+function loader(content, sourcemap) {
+    var callback = this.async();
+    if (!callback)
+        throw new Error('Must be used as async loader');
+    var opts = lu.getOptions(this);
+    loadAsync(content, this, opts)
+        .then(result => callback(null, result, sourcemap))
+        .catch(err => {
+        this.emitError(err);
+        callback(err);
+    });
+}
 function loadAsync(content, loader, opts) {
     var file = loader.resourcePath;
     content = injectReplace(content, file, loader, opts);
@@ -13,7 +33,7 @@ function injectReplace(content, file, loader, opts) {
         if (relPath == null)
             relPath = '';
         var packageResourcePath = packageName + relPath;
-        var newPackage = getInjectedPackage(file, packageResourcePath, opts ? opts.injector : null);
+        var newPackage = _getInjectedPackage(file, packageResourcePath, opts ? opts.injector : null);
         if (newPackage) {
             log.info(`Found injected less import target: ${packageResourcePath}, replaced to ${newPackage}`);
             packageResourcePath = newPackage;
@@ -27,7 +47,6 @@ function injectReplace(content, file, loader, opts) {
     });
     return replaced;
 }
-module.exports.getInjectedPackage = getInjectedPackage;
 /**
  *
  * @param {*} file
@@ -35,7 +54,7 @@ module.exports.getInjectedPackage = getInjectedPackage;
  * @return {*} could be {string} for injected package name, {null} for no injection,
  * empty string for `replaceCode` with falsy value
  */
-function getInjectedPackage(file, origPackageName, injector) {
+function _getInjectedPackage(file, origPackageName, injector) {
     if (!injector)
         injector = rj;
     const fmaps = injector.factoryMapsForFile(file);
@@ -65,16 +84,8 @@ function getInjectedPackage(file, origPackageName, injector) {
     }
     return replaced;
 }
-module.exports = function (content, sourcemap) {
-    var callback = this.async();
-    if (!callback)
-        throw new Error('Must be used as async loader');
-    var opts = lu.getOptions(this);
-    loadAsync(content, this, opts)
-        .then(result => callback(null, result, sourcemap))
-        .catch(err => {
-        this.emitError(err);
-        callback(err);
-    });
-};
+(function (loader) {
+    loader.getInjectedPackage = _getInjectedPackage;
+})(loader || (loader = {}));
+module.exports = loader;
 //# sourceMappingURL=css-loader.js.map
