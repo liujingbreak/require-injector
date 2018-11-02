@@ -16,7 +16,7 @@ var log = require('@log4js-node/log4js-api').getLogger('require-injector.replace
 acornjsx = acornImpInject(acornjsx);
 
 export interface RequireInjector {
-	fromPackage(packageName: string | string[], resolveOpt: ResolveOption): FactoryMapInterf;
+	fromPackage(packageName: string | string[], resolveOpt?: ResolveOption): FactoryMapInterf;
 	fromDir(dir: string | string[]): FactoryMapInterf;
 	transform(file: string): Transform;
 	injectToFile(filePath: string, code: string, ast?: any): string;
