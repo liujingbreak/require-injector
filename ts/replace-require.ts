@@ -3,17 +3,23 @@ import patchText, {ReplacementInf} from './patch-text';
 import {FactoryMap, ReplaceType, ReplacedResult, FactoryMapInterf} from './factory-map';
 import Injector, {InjectorOption, ResolveOption} from './node-inject';
 import * as _ from 'lodash';
-var acorn = require('acorn');
+// var acorn = require('acorn');
+import * as acorn from 'acorn';
+// import acorn = require('acorn');
+const dynamicImport = require('acorn-dynamic-import').default;
+// import jsx from 'acorn-jsx';
 var estraverse = require('estraverse-fb');
-var acornjsx = require('acorn-jsx/inject')(acorn);
-var acornImpInject = require('acorn-dynamic-import/lib/inject').default;
+const jsx = require('acorn-jsx');
+let acornjsx = acorn.Parser.extend(jsx());
+acornjsx.extend(dynamicImport);
+
 import through = require('through2');
 var {parse: parseEs6Import, parseExport} = require('../dist/parse-esnext-import');
 import {TypescriptParser} from './parse-ts-import';
 
 var log = require('@log4js-node/log4js-api').getLogger('require-injector.replace-require');
 
-acornjsx = acornImpInject(acornjsx);
+// acornjsx = acornImpInject(acorn);
 
 export interface RequireInjector {
 	fromPackage(packageName: string | string[], resolveOpt?: ResolveOption): FactoryMapInterf;
@@ -85,10 +91,10 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
 			factoryMaps = this.factoryMapsForFile(filePath);
 			var replaced = null;
 			if (factoryMaps.length > 0) {
-				if (/\.tsx?$/.test(filePath)) {
+				// if (/\.tsx?$/.test(filePath)) {
 					replaced = this.tsParser.replace(code, factoryMaps, filePath, ast);
-				} else
-					replaced = this.replace(code, factoryMaps, filePath, ast);
+				// } else
+					// replaced = this.replace(code, factoryMaps, filePath, ast);
 				if (replaced != null)
 					return replaced;
 			}
@@ -258,11 +264,11 @@ export function parseCode(code: string) {
 	var ast;
 	var firstCompileErr = null;
 	try {
-		ast = acornjsx.parse(code, {allowHashBang: true, sourceType: 'module', plugins: {jsx: true, dynamicImport: true}});
+		ast = acornjsx.parse(code, {allowHashBang: true, sourceType: 'module'});
 	} catch (err) {
 		firstCompileErr = err;
 		try {
-			ast = acornjsx.parse(code, {allowHashBang: true, plugins: {jsx: true, dynamicImport: true}});
+			ast = acorn.parse(code, {allowHashBang: true});
 		} catch (err2) {
 			log.error('Possible ES compilation error', firstCompileErr);
 			firstCompileErr.message += '\nOr ' + err2.message;

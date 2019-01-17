@@ -130,6 +130,17 @@ export class TypescriptParser {
 						if (arg.kind === SyntaxKind.StringLiteral) {
 							this._addPatch(arg.getStart(this.srcfile, false), arg.getEnd(), (arg as ts.StringLiteral).text, ReplaceType.rs);
 							// console.log(`replace require.ensure(${(arg as ts.StringLiteral).text})`);
+						} else if (arg.kind === SyntaxKind.ArrayLiteralExpression) {
+							const arrArg = arg as ts.ArrayLiteralExpression;
+							for (const moduleNameAst of arrArg.elements) {
+								if (moduleNameAst.kind !== SyntaxKind.StringLiteral) {
+									// tslint:disable-next-line:no-console
+									console.log('[require-injector] parse %s failed, only support arguments of `require.ensure()` as StringLiteral', this.srcfile.fileName);
+									continue;
+								}
+								this._addPatch(moduleNameAst.getStart(this.srcfile, false),
+									moduleNameAst.getEnd(), (moduleNameAst as ts.StringLiteral).text, ReplaceType.rs);
+							}
 						}
 					});
 					// console.log('Found require.ensure()', node.arguments.map(arg => (arg as any).text));

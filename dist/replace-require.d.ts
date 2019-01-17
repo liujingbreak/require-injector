@@ -3,6 +3,7 @@ import { Transform } from 'stream';
 import { ReplacementInf } from './patch-text';
 import { FactoryMap, ReplaceType, FactoryMapInterf } from './factory-map';
 import Injector, { InjectorOption, ResolveOption } from './node-inject';
+import * as acorn from 'acorn';
 import { TypescriptParser } from './parse-ts-import';
 export interface RequireInjector {
     fromPackage(packageName: string | string[], resolveOpt?: ResolveOption): FactoryMapInterf;
@@ -45,4 +46,4 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
     protected onRequireEnsure(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
     protected addPatch(patches: ReplacementInf[], start: number, end: number, moduleName: string, replaceType: ReplaceType, fmaps: FactoryMap[], fileParam: string): void;
 }
-export declare function parseCode(code: string): any;
+export declare function parseCode(code: string): acorn.Node;
