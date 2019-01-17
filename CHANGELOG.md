@@ -21,3 +21,6 @@ or Typescript
 import Injector from 'require-inject';
 new INjector().on('inject', moduleId => {});
 ```
+
+### 5.1.0
+Use Typescript 3.2.x to parse all JS, JSX files, acorn is no longer used.
