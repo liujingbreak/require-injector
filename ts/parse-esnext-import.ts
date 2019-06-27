@@ -1,4 +1,4 @@
-import * as _ from 'lodash';
+import _ from 'lodash';
 // var {EOL} = require('os');
 
 var seq = 0;
@@ -28,12 +28,12 @@ export class ParseInfo {
 	vars: {[k: string]: string} = {}; // import {foo as bar ...}
 	defaultVar: string; // import foo from ...
 	namespaceVar: string; // import * as ...
-	from: string = null;
+	from: string;
 }
 
 export class ParseExportInfo {
 	exported: {[name: string]: string} = {}; // Empty means ExportAllDeclaration "export * from ..."
-	from: string = null;
+	from: string;
 }
 
 export function parse(ast: any): ParseInfo {

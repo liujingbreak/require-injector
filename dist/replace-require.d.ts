@@ -12,7 +12,7 @@ export interface RequireInjector {
     injectToFile(filePath: string, code: string, ast?: any): string;
     cleanup(): void;
 }
-export declare function replace(code: string, factoryMaps: FactoryMap[], fileParam: any, ast: any): string;
+export declare function replace(code: string, factoryMaps: FactoryMap[], fileParam: any, ast: any): string | null;
 export default class ReplaceRequire extends Injector implements RequireInjector {
     transform: (file: string) => Transform;
     protected tsParser: TypescriptParser;
@@ -38,7 +38,7 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
     /**
      * @return null if there is no change
      */
-    replace(code: string, fm: FactoryMap | FactoryMap[], fileParam: string, ast?: any): string;
+    replace(code: string, fm: FactoryMap | FactoryMap[], fileParam: string, ast?: any): string | null;
     protected onImport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
     protected onExport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
     protected onImportAsync(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;

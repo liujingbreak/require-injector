@@ -20,20 +20,20 @@ describe('TypescriptParser', () => {
 	});
 	fm.alias('asyncModule', '_asyncModule_');
 	fm.alias('yyy', '_yyy_');
-	var replaced: string;
+	var replaced: string | null;
 
 	it('can replace \'import\' and \'require\' statements ', () => {
 		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
 		console.log('---------------\n%s\n--------------', replaced);
-		expect(/var __imp[0-9]__ = API, api = __imp[0-9]__\["default"\];/.test(replaced)).toBeTruthy();
-		expect(replaced.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
+		expect(/var __imp[0-9]__ = API, api = __imp[0-9]__\["default"\];/.test(replaced!)).toBeTruthy();
+		expect(replaced!.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
 
 		expect(replaced).toMatch(/var a =\s*API;/);
 		expect(replaced).toMatch(/import\("_asyncModule_"*\);/);
 	});
 
 	it('require.ensure should be replaced', () => {
-		expect(/require.ensure\("_yyy_",/.test(replaced)).toBe(true);
+		expect(/require.ensure\("_yyy_",/.test(replaced!)).toBe(true);
 	});
 
 	it('replaceCode should work with import * ....', () => {
@@ -46,7 +46,7 @@ describe('TypescriptParser', () => {
 				exports: {}
 			}
 		};
-		vm.runInNewContext(replaced, vm.createContext(sandbox));
+		vm.runInNewContext(replaced!, vm.createContext(sandbox));
 		expect(sandbox._).toBe('hellow');
 	});
 

@@ -145,7 +145,7 @@ class Injector extends EventEmitter {
 	 * @return {[type]}      [description]
 	 */
 	_fromDir(path: string, tree: DirTree<FactoryMap>): FactoryMap {
-		var factory: FactoryMap;
+		var factory: FactoryMap | undefined;
 		var linked = parseSymlink(path);
 		if (linked !== path) {
 			log.debug('%s is symbolic link path to %s', path, linked);

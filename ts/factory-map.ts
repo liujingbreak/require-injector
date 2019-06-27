@@ -42,14 +42,15 @@ interface ReplaceActions {
 }
 
 interface InjectActions {
-	[method: string]: (this: FactoryMap, value: FactoryFunc | any,
-		calleeModuleId: string,
-		calleeModule?: any,
-		requireCall?: (m: any, file: string) => FactorySetting,
-		subPath?: string) => FactorySetting;
+	[method: string]: InjectActionFunc;
 }
+type InjectActionFunc = (this: FactoryMap, value: FactoryFunc | any,
+	calleeModuleId: string,
+	calleeModule: any,
+	requireCall: (m: any, file: string) => FactorySetting,
+	subPath?: string) => FactorySetting;
 
-export type FactoryFunc = (sourceFilePath: string, regexpExecResult: RegExpExecArray) => string;
+export type FactoryFunc = (sourceFilePath: string, regexpExecResult?: RegExpExecArray) => string;
 
 export class FactoryMap implements FactoryMapInterf {
 	config: Config;
@@ -114,8 +115,8 @@ export class FactoryMap implements FactoryMapInterf {
 			setting.prefix = webpackLoaderPrefix;
 			return setting;
 		} else {
-			const isPath = _.startsWith(name, '.') || Path.isAbsolute(name);
-			if (!isPath && (_.startsWith(name, '@') || name.indexOf('/') > 0)) {
+			const isPackage = !_.startsWith(name, '.') && !Path.isAbsolute(name);
+			if (isPackage && (_.startsWith(name, '@') || name.indexOf('/') > 0)) {
 				var m = /^((?:@[^\/]+\/)?[^\/]+)(\/.+?)?$/.exec(name);
 				if (m && _.has(this.requireMap, m[1])) {
 					setting = _.extend({}, this.requireMap[m[1]]);
@@ -125,17 +126,13 @@ export class FactoryMap implements FactoryMapInterf {
 				}
 			}
 			let foundReg =  _.find(this.regexSettings, s => {
-				s.execResult = s.regex.exec(name);
+				s.execResult = s.regex.exec(name) || undefined;
 				return s.execResult != null;
 			});
 			if (foundReg) {
 				foundReg = _.extend({}, foundReg);
 				foundReg.prefix = webpackLoaderPrefix;
 				return foundReg;
-			}
-			if (isPath && this.resolvePaths) {
-				// do resolve path
-				return lookupPath(name, this.resolvePaths);
 			}
 			return null;
 		}
@@ -194,7 +191,7 @@ export class FactoryMap implements FactoryMapInterf {
 
 let replaceActions: ReplaceActions = {
 	factory(this: FactoryMap, value: FactoryFunc, type: ReplaceType, fileParam: string, execResult: RegExpExecArray,
-		astInfo: ParseInfo, prefix?: any, subPath?: string): string | ReplacedResult {
+		astInfo: ParseInfo, prefix?: any, subPath?: string): string | ReplacedResult | null {
 		const sourcePath = JSON.stringify(this.config.enableFactoryParamFile ? fileParam : '');
 		const execFactory = '(' + value.toString() + ')(' + sourcePath +
 				(execResult ? ',' + JSON.stringify(execResult) : '') + ')';
@@ -211,7 +208,7 @@ let replaceActions: ReplaceActions = {
 	},
 
 	substitute(this: FactoryMap, setting: FactoryFunc | string, type: ReplaceType, fileParam: string, execResult: RegExpExecArray,
-		astInfo: ParseInfo, prefix?: any, subPath?: string): string | ReplacedResult {
+		astInfo: ParseInfo, prefix?: any, subPath?: string): string | ReplacedResult | null {
 		if (type === ReplaceType.rs) { // for require.ensure
 			if (_.isFunction(setting))
 				return JSON.stringify(setting(fileParam, execResult) + subPath);
@@ -232,6 +229,7 @@ let replaceActions: ReplaceActions = {
 				code: replaced
 			};
 		}
+		return null;
 	},
 
 	value(this: FactoryMap, setting: FactoryFunc | {replacement: FactoryFunc | string}, type: ReplaceType, fileParam: string, execResult: RegExpExecArray,
@@ -395,8 +393,8 @@ let injectActions: InjectActions = {
 
 	value(setting: FactorySetting,
 		calleeModuleId: string,
-		calleeModule?: any,
-		requireCall?: (m: any, file: string) => FactorySetting,
+		calleeModule: any,
+		requireCall: (m: any, file: string) => FactorySetting,
 		subPath?: string) {
 		if (_.has(setting, 'value'))
 			return setting.value;
@@ -406,15 +404,15 @@ let injectActions: InjectActions = {
 
 	replaceCode(setting: FactorySetting,
 		calleeModuleId: string,
-		calleeModule?: any,
-		requireCall?: (m: any, file: string) => FactorySetting,
+		calleeModule: any,
+		requireCall: (m: any, file: string) => FactorySetting,
 		subPath?: string): any {
 		// tslint:disable-next-line:no-console
 		console.log('require-injector does not support "replaceCode()" for NodeJS environment');
 	},
 
-	substitute(setting: FactorySetting, calleeModuleId: string, calleeModule?: any,
-		requireCall?: (m: any, file: string) => FactorySetting, subPath?: string) {
+	substitute(setting: any, calleeModuleId: string, calleeModule: any,
+		requireCall: (m: any, file: string) => FactorySetting, subPath?: string) {
 		return requireCall.call(calleeModule, setting + subPath);
 	},
 
@@ -462,8 +460,3 @@ export class FactoryMapCollection implements FactoryMapInterf {
 	}
 }
 
-
-function lookupPath(name: string, paths: string[]): null {
-	// todo
-	return null;
-}

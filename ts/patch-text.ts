@@ -23,7 +23,7 @@ export class Replacement implements ReplacementInf {
 	}
 }
 
-export function _sortAndRemoveOverlap(replacements: ReplacementInf[], removeOverlap = true, text?: string) {
+export function _sortAndRemoveOverlap(replacements: ReplacementInf[], removeOverlap = true, text: string) {
 	replacements.sort(function(a, b) {
 		return a.start - b.start;
 	});
@@ -53,8 +53,8 @@ export function _replaceSorted(text: string, replacements: ReplacementInf[]) {
 		var start = update.start + offset;
 		var end = update.end + offset;
 		var replacement = update.text == null ? update.replacement : update.text;
-		offset += (replacement.length - (end - start));
-		return text.slice(0, start) + replacement + text.slice(end);
+		offset += (replacement!.length - (end - start));
+		return text.slice(0, start) + replacement! + text.slice(end);
 	}, text);
 }
 

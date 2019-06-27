@@ -38,7 +38,7 @@ function injectReplace(content: string, file: string, loader: {resourcePath: str
 		if (relPath == null)
 			relPath = '';
 		var packageResourcePath = packageName + relPath;
-		var newPackage = _getInjectedPackage(file, packageResourcePath, opts ? opts.injector : null);
+		var newPackage = _getInjectedPackage(file, packageResourcePath, opts ? opts.injector : undefined);
 		if (newPackage) {
 			log.info(`Found injected less import target: ${packageResourcePath}, replaced to ${newPackage}`);
 			packageResourcePath = newPackage;
@@ -59,10 +59,10 @@ function injectReplace(content: string, file: string, loader: {resourcePath: str
  * @return {*} could be {string} for injected package name, {null} for no injection,
  * empty string for `replaceCode` with falsy value
  */
-function _getInjectedPackage(file: string, origPackageName: string, injector: Inject): string {
+function _getInjectedPackage(file: string, origPackageName: string, injector?: Inject): string | null {
 	if (!injector)
 		injector = rj;
-	const fmaps = injector.factoryMapsForFile(file);
+	const fmaps = injector!.factoryMapsForFile(file);
 	let replaced = null;
 	if (fmaps.length > 0) {
 		_.some(fmaps, factoryMap => {

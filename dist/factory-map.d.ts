@@ -32,7 +32,7 @@ export interface ReplacedResult {
 interface ReplaceActions {
     [method: string]: (this: FactoryMap, replaceWith: FactoryFunc | any, type: ReplaceType, fileParam: string, execResult: RegExpExecArray, astInfo: ParseInfo, prefix?: any, subPath?: string) => null | string | ReplacedResult;
 }
-export declare type FactoryFunc = (sourceFilePath: string, regexpExecResult: RegExpExecArray) => string;
+export declare type FactoryFunc = (sourceFilePath: string, regexpExecResult?: RegExpExecArray) => string;
 export declare class FactoryMap implements FactoryMapInterf {
     config: Config;
     requireMap: {

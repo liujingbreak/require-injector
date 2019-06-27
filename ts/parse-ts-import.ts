@@ -39,12 +39,12 @@ export class TypescriptParser {
 	private _addPatch: (start: number, end: number, moduleName: string, replaceType: ReplaceType) => void;
 	private _addPatch4Import: (allStart: number, allEnd: number, start: number, end: number,
 		moduleName: string, info: ParseInfo) => void;
-	constructor(public esReplacer: ReplaceRequire = null) {}
+	constructor(public esReplacer: ReplaceRequire | null = null) {}
 
 	replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile): string | null {
 		let patches: Array<{start: number, end: number, replacement: string}> = [];
 		let self = this;
-		factoryMaps = [].concat(factoryMaps);
+		factoryMaps = ([] as FactoryMap[]).concat(factoryMaps);
 		this._addPatch = function(start: number, end: number, moduleName: string, replaceType: ReplaceType) {
 			if (! this.esReplacer)
 				return;
@@ -93,10 +93,10 @@ export class TypescriptParser {
 
 			// parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.getStart(this.srcfile, false), node.moduleSpecifier.getEnd()))[1];
 			if (_.get(node, 'importClause.name')) {
-				parseInfo.defaultVar = node.importClause.name.text;
+				parseInfo.defaultVar = node.importClause!.name!.text;
 			}
 			if (_.get(node, 'importClause.namedBindings')) {
-				let nb = node.importClause.namedBindings;
+				let nb = node.importClause!.namedBindings!;
 				if (nb.kind === SyntaxKind.NamespaceImport) {
 					parseInfo.namespaceVar = nb.name.text;
 				} else {

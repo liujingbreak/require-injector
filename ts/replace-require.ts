@@ -86,7 +86,7 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
 	 * 	same source code will be returned.
 	 */
 	injectToFile(filePath: string, code: string, ast?: any) {
-		var factoryMaps: FactoryMap[];
+		var factoryMaps: FactoryMap[]|undefined;
 		try {
 			factoryMaps = this.factoryMapsForFile(filePath);
 			var replaced = null;
@@ -101,7 +101,8 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
 			return code;
 		} catch (e) {
 			log.error('filePath: ' + filePath);
-			log.error(_.map(factoryMaps, factoryMap => factoryMap.requireMap).join());
+			if (factoryMaps != null)
+				log.error(_.map(factoryMaps, factoryMap => factoryMap.requireMap).join());
 			log.error(e.stack);
 			throw e;
 		}

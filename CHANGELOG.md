@@ -24,3 +24,6 @@ new INjector().on('inject', moduleId => {});
 
 ### 5.1.0
 Use Typescript 3.2.x to parse all JS, JSX files, acorn is no longer used.
+
+### 5.1.1
+Enable TS compiler option "strictNullCheck" for better quality.

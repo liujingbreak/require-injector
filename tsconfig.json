@@ -18,6 +18,7 @@
 		"noUnusedLocals": true,
 		"preserveSymlinks": false,
 		"importHelpers": true,
+		"strictNullChecks": true,
 		"lib": ["es2016", "es2015"],
 		"pretty": true,
 		"paths": {
