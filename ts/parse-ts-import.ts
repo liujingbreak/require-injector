@@ -92,6 +92,9 @@ export class TypescriptParser {
 			let node = ast as ts.ImportDeclaration;
 			// console.log('found import statement:', ast.getText(srcfile));
 			let parseInfo = new ParseInfo();
+			if (!node.moduleSpecifier && ast.kind === SyntaxKind.ExportDeclaration) {
+				return;
+			}
 			parseInfo.from = (node.moduleSpecifier as ts.StringLiteral).text;
 
 			// parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.getStart(this.srcfile, false), node.moduleSpecifier.getEnd()))[1];

@@ -28,5 +28,5 @@ Use Typescript 3.2.x to parse all JS, JSX files, acorn is no longer used.
 ### 5.1.1
 Enable TS compiler option "strictNullCheck" for better quality.
 
-### 5.1.2
+### 5.1.3
 Support Replacing Typescript source code export statement, e.g. `export * as foobar from "To-be-replaced";`

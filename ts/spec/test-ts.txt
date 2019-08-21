@@ -16,3 +16,4 @@ import('asyncModule');
 a.require('__api');
 export * from 'lodash';
 export {each} from 'lodash';
+export {abc};
