@@ -77,15 +77,18 @@ export class TypescriptParser {
 
 	parseTsSource(source: string, file: string, ast?: ts.SourceFile): void {
 		this.srcfile = ast || ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
-			false, ts.ScriptKind.TSX);
-		for(let stm of this.srcfile.statements) {
-			this.traverseTsAst(stm, this.srcfile);
+			true, ts.ScriptKind.TSX);
+		const asts: ts.Node[] = [...this.srcfile.statements];
+		let node = asts.shift();
+		while (node != null) {
+			this.traverseTsAst(node, this.srcfile, asts);
+			node = asts.shift();
 		}
 	}
 
-	private traverseTsAst(ast: ts.Node, srcfile: ts.SourceFile, level = 0) {
+	private traverseTsAst(ast: ts.Node, srcfile: ts.SourceFile, visitLater: ts.Node[]) {
 		let SyntaxKind = ts.SyntaxKind;
-		if (ast.kind === SyntaxKind.ImportDeclaration) {
+		if (ast.kind === SyntaxKind.ImportDeclaration || ast.kind === SyntaxKind.ExportDeclaration) {
 			let node = ast as ts.ImportDeclaration;
 			// console.log('found import statement:', ast.getText(srcfile));
 			let parseInfo = new ParseInfo();
@@ -147,8 +150,6 @@ export class TypescriptParser {
 				}
 			}
 		}
-		ast.forEachChild((sub: ts.Node) => {
-			this.traverseTsAst(sub, srcfile, level + 1);
-		});
+		visitLater.push(...ast.getChildren());
 	}
 }

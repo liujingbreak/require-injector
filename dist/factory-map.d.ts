@@ -1,4 +1,4 @@
-import { ParseInfo } from './parse-esnext-import';
+import { ParseInfo, ParseExportInfo } from './parse-esnext-import';
 export interface Config {
     [key: string]: any;
     enableFactoryParamFile?: boolean | undefined;
@@ -60,7 +60,7 @@ export declare class FactoryMap implements FactoryMapInterf {
      * @param  {string} fileParam  current replacing file path
      * @return {string}            replacement text
      */
-    getReplacement(factorySetting: FactorySetting, type: ReplaceType, fileParam: string, info?: ParseInfo): string | ReplacedResult | null;
+    getReplacement(factorySetting: FactorySetting, type: ReplaceType, fileParam: string, info?: ParseInfo | ParseExportInfo): string | ReplacedResult | null;
     getInjected(factorySetting: FactorySetting, calleeModuleId: string, calleeModule: any, requireCall: (m: any, file: string) => FactorySetting): any;
     addResolvePath(dir: string): this;
     _addSetting(this: FactoryMap, method: string, name: string | RegExp, value: FactoryFunc | any): FactoryMap;

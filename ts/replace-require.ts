@@ -3,18 +3,15 @@ import patchText, {ReplacementInf} from './patch-text';
 import {FactoryMap, ReplaceType, ReplacedResult, FactoryMapInterf} from './factory-map';
 import Injector, {InjectorOption, ResolveOption} from './node-inject';
 import * as _ from 'lodash';
-// var acorn = require('acorn');
 import * as acorn from 'acorn';
-// import acorn = require('acorn');
 const dynamicImport = require('acorn-dynamic-import').default;
-// import jsx from 'acorn-jsx';
 var estraverse = require('estraverse-fb');
 const jsx = require('acorn-jsx');
 let acornjsx = acorn.Parser.extend(jsx());
 acornjsx.extend(dynamicImport);
 
 import through = require('through2');
-var {parse: parseEs6Import, parseExport} = require('../dist/parse-esnext-import');
+import {parseExport, parse as parseEs6Import} from './parse-esnext-import';
 import {TypescriptParser} from './parse-ts-import';
 
 var log = require('@log4js-node/log4js-api').getLogger('require-injector.replace-require');

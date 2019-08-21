@@ -1,5 +1,5 @@
 // tslint:disable max-line-length
-import {ParseInfo} from './parse-esnext-import';
+import {ParseInfo, ParseExportInfo} from './parse-esnext-import';
 import * as _ from 'lodash';
 var Path = require('path');
 import {toAssignment} from './parse-esnext-import';
@@ -145,7 +145,7 @@ export class FactoryMap implements FactoryMapInterf {
 	 * @param  {string} fileParam  current replacing file path
 	 * @return {string}            replacement text
 	 */
-	getReplacement(factorySetting: FactorySetting, type: ReplaceType, fileParam: string, info?: ParseInfo): string | ReplacedResult | null {
+	getReplacement(factorySetting: FactorySetting, type: ReplaceType, fileParam: string, info?: ParseInfo | ParseExportInfo): string | ReplacedResult | null {
 		if (!factorySetting)
 			throw new Error('This is require-injector\' fault, error due to null factorySetting, tell author about it.');
 		return replaceActions[factorySetting.method].call(this,

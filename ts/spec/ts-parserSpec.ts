@@ -6,6 +6,7 @@ import * as vm from 'vm';
 // import * as _ from 'lodash';
 import {TypescriptParser} from '../parse-ts-import';
 import {FactoryMap} from '../factory-map';
+import Query from '../ts-ast-query';
 const EsReplacer = require('../../lib/replace-require');
 
 describe('TypescriptParser', () => {
@@ -34,6 +35,11 @@ describe('TypescriptParser', () => {
 
 	it('require.ensure should be replaced', () => {
 		expect(/require.ensure\("_yyy_",/.test(replaced!)).toBe(true);
+	});
+
+	xit('"export from" should be replaced', () => {
+		const query = new Query(source, 'test-ts.txt');
+		query.printAll();
 	});
 
 	it('replaceCode should work with import * ....', () => {
