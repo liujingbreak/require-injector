@@ -8,6 +8,7 @@ import { TypescriptParser } from './parse-ts-import';
 export interface RequireInjector {
     fromPackage(packageName: string | string[], resolveOpt?: ResolveOption): FactoryMapInterf;
     fromDir(dir: string | string[]): FactoryMapInterf;
+    fromRoot(): FactoryMapInterf;
     transform(file: string): Transform;
     injectToFile(filePath: string, code: string, ast?: any): string;
     cleanup(): void;

@@ -28,7 +28,7 @@ export class DirTree<T> {
 		if (!Array.isArray(path)) {
 			if (Path.sep === '\\')
 				path = path.toLowerCase();
-			return this.getAllData(path.replace(/\\/g, '/').split('/'));
+			return this.getAllData(path.split(/[/\\]/));
 		}
 		// if (path[0] === '')
 		// 	path.shift();
@@ -53,7 +53,7 @@ export class DirTree<T> {
 		if (!Array.isArray(path)) {
 			if (Path.sep === '\\')
 				path = path.toLowerCase();
-			return this.ensureNode(path.replace(/\\/g, '/').split('/'));
+			return this.ensureNode(path.split(/[/\\]/));
 		}
 		var tree = this.root;
 		_.each(path, name => {
@@ -72,7 +72,7 @@ export class DirTree<T> {
 		if (!Array.isArray(path)) {
 			if (Path.sep === '\\')
 				path = path.toLowerCase();
-			return this.findNode(path.replace(/\\/g, '/').split('/'));
+			return this.findNode(path.split(/[/\\]/));
 		}
 		var tree: TreeNode<T> | null = this.root;
 		_.every(path, name => {

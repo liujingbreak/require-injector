@@ -119,6 +119,10 @@ class Injector extends EventEmitter {
 		return this._fromDir(path, this.dirTree);
 	}
 
+	fromRoot(): FactoryMapInterf {
+		return this._fromDir('', this.dirTree);
+	}
+
 	fromDir(dir: string | string[]): FactoryMapInterf {
 		if (_.isArray(dir)) {
 			var args = [].slice.call(arguments);

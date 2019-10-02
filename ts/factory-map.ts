@@ -50,7 +50,7 @@ type InjectActionFunc = (this: FactoryMap, value: FactoryFunc | any,
 	requireCall: (m: any, file: string) => FactorySetting,
 	subPath?: string) => FactorySetting;
 
-export type FactoryFunc = (sourceFilePath: string, regexpExecResult?: RegExpExecArray) => string;
+export type FactoryFunc = (sourceFilePath: string, regexpExecResult?: RegExpExecArray) => any;
 
 export class FactoryMap implements FactoryMapInterf {
 	config: Config;

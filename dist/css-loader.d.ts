@@ -15,7 +15,7 @@ declare function loader(content: string, sourcemap: any): void;
  * @return {*} could be {string} for injected package name, {null} for no injection,
  * empty string for `replaceCode` with falsy value
  */
-function _getInjectedPackage(file: string, origPackageName: string, injector?: Inject): string | null;
+declare function _getInjectedPackage(file: string, origPackageName: string, injector?: Inject): string | null;
 declare namespace loader {
     const getInjectedPackage: typeof _getInjectedPackage;
 }

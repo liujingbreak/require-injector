@@ -33,6 +33,7 @@ declare class Injector extends EventEmitter {
     cleanup(): void;
     fromPackage(packageName: string | string[], resolveOpts?: ResolveOption): FactoryMapInterf;
     _fromPackage(packageName: string, resolveOpts?: ResolveOption): FactoryMapInterf;
+    fromRoot(): FactoryMapInterf;
     fromDir(dir: string | string[]): FactoryMapInterf;
     resolveFromDir(dir: string): FactoryMapInterf;
     /**

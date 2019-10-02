@@ -21,6 +21,7 @@ var log = require('@log4js-node/log4js-api').getLogger('require-injector.replace
 export interface RequireInjector {
 	fromPackage(packageName: string | string[], resolveOpt?: ResolveOption): FactoryMapInterf;
 	fromDir(dir: string | string[]): FactoryMapInterf;
+	fromRoot(): FactoryMapInterf;
 	transform(file: string): Transform;
 	injectToFile(filePath: string, code: string, ast?: any): string;
 	cleanup(): void;

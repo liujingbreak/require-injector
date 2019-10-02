@@ -34,3 +34,7 @@ Support Replacing Typescript source code export statement, e.g. `export * as foo
 ### 5.1.4
 Bug fix: Incorrect TS type definition for FactoryMapInterf.factory() function
 
+### 5.1.5
+- Bug fix: Incorrect TS type definition for FactoryMapInterf.factory() function, return type should be `any` not `string`
+
+- New function `.fromRoot()`
