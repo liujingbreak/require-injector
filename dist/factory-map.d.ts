@@ -68,7 +68,7 @@ export declare class FactoryMap implements FactoryMapInterf {
 export interface FactoryMapInterf {
     /**
      * Replacing a required module with a function returned value. Not working for `require.ensure()`
-     * @param name the original module name which is required for, it can't be a relative file path.
+     * @param requiredModule the original module name which is required for, it can't be a relative file path.
      * @param factoryFunc A function invoked with 1 argument: `sourceFilePath` and returns a value which then will replace the original module of `requiredModule`.
      *
      * **Note**: In browser side replacement mode, it replaces entire `require('requiredModule')` expression in source code with Immediately-Invoked Function Expression (IIFE) of the factory function`.toString()`:
@@ -83,7 +83,7 @@ export interface FactoryMapInterf {
         The factory eventually stands in source code, not NodeJS runtime.
         Thus you can not have any reference to any closure variable in factory function.
      */
-    factory(name: string | RegExp, RegExp: string | FactoryFunc): FactoryMapInterf;
+    factory(requiredModule: string | RegExp, factoryFunc: FactoryFunc): FactoryMapInterf;
     /**
      * Or
         `alias(requiredModule, newModule)`

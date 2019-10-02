@@ -1,4 +1,3 @@
-import * as _ from 'lodash';
 export interface TreeNode<T> {
     map: {
         [child: string]: TreeNode<T>;
@@ -16,5 +15,5 @@ export declare class DirTree<T> {
     getAllData(path: string | string[]): T[];
     ensureNode(path: string | string[]): TreeNode<T>;
     findNode(path: string | string[]): TreeNode<T> | null;
-    traverse(level: number, tree: TreeNode<T>, lines: string[]): _.Many<string>;
+    traverse(level: number, tree: TreeNode<T>, lines: string[]): string | string[];
 }

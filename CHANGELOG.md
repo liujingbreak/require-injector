@@ -30,3 +30,7 @@ Enable TS compiler option "strictNullCheck" for better quality.
 
 ### 5.1.3
 Support Replacing Typescript source code export statement, e.g. `export * as foobar from "To-be-replaced";`
+
+### 5.1.4
+Bug fix: Incorrect TS type definition for FactoryMapInterf.factory() function
+
