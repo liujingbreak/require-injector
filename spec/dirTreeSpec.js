@@ -1,4 +1,4 @@
-const DirTree = require('../lib/dir-tree').DirTree;
+const DirTree = require('../dist/dir-tree').DirTree;
 
 describe('DirTree', () => {
 	it('should build proper tree for certain', () => {
@@ -51,5 +51,11 @@ describe('DirTree', () => {
 		expect(dt.getData('C:/a/b/c2')).toBe(4);
 		expect(dt.getData('C:/a/b/c1/d/x/x/x')).toBe(5);
 		expect(dt.getData('C:/a/b')).toBe(6);
+	});
+
+	it('root should work', () => {
+		let dt = new DirTree();
+		dt.putRootData(1);
+		expect(dt.getAllData('d:/abc/efg')).toEqual([1]);
 	});
 });

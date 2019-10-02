@@ -43,7 +43,7 @@ declare class Injector extends EventEmitter {
      * @return {[type]}      [description]
      */
     _fromDir(path: string, tree: DirTree<FactoryMap>): FactoryMap;
-    _createFactoryMapFor(path: string, tree: DirTree<FactoryMap>, existingFactory?: FactoryMap): FactoryMap;
+    _createFactoryMapFor(path: string | undefined, tree: DirTree<FactoryMap>, existingFactory?: FactoryMap): FactoryMap;
     /**
      * Return array of configured FactoryMap for source code file depends on the file's location.
      * Later on, you can call `factoryMap.matchRequire(name)` to get exact inject value

@@ -158,7 +158,7 @@ class Injector extends EventEmitter {
 		return this._createFactoryMapFor(path, tree, factory);
 	}
 
-	_createFactoryMapFor(path: string, tree: DirTree<FactoryMap>, existingFactory?: FactoryMap): FactoryMap {
+	_createFactoryMapFor(path = '', tree: DirTree<FactoryMap>, existingFactory?: FactoryMap): FactoryMap {
 		// path = this._pathToSortKey(path);
 		if (!existingFactory) {
 			var f = tree.getData(path);

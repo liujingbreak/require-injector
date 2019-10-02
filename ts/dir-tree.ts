@@ -11,12 +11,27 @@ export interface TreeNode<T> {
 export class DirTree<T> {
 	root: TreeNode<T> = {map: {}, name: ''};
 
+	putRootData(data: T) {
+		this.root.data = data;
+	}
+
+	getRootData() {
+		return this.root.data;
+	}
+
 	putData(path: string, data: T) {
+		if (!path) {
+			this.putRootData(data);
+			return;
+		}
 		var tree = this.ensureNode(path);
 		tree.data = data;
 	}
 
 	getData(path: string): T | null | undefined {
+		if (!path) {
+			return this.getRootData();
+		}
 		var tree = this.findNode(path);
 		return tree ? tree.data : null;
 	}
@@ -86,7 +101,7 @@ export class DirTree<T> {
 		return tree;
 	}
 
-	traverse(level: number, tree: TreeNode<T>, lines: string[]) {
+	traverse(level = 0, tree?: TreeNode<T>, lines: string[] = []) {
 		var isRoot = false;
 		if (!level)
 			level = 0;

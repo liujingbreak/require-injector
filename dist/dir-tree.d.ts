@@ -7,6 +7,8 @@ export interface TreeNode<T> {
 }
 export declare class DirTree<T> {
     root: TreeNode<T>;
+    putRootData(data: T): void;
+    getRootData(): T | undefined;
     putData(path: string, data: T): void;
     getData(path: string): T | null | undefined;
     /**
@@ -15,5 +17,5 @@ export declare class DirTree<T> {
     getAllData(path: string | string[]): T[];
     ensureNode(path: string | string[]): TreeNode<T>;
     findNode(path: string | string[]): TreeNode<T> | null;
-    traverse(level: number, tree: TreeNode<T>, lines: string[]): string | string[];
+    traverse(level?: number, tree?: TreeNode<T>, lines?: string[]): string | string[];
 }
