@@ -38,3 +38,6 @@ Bug fix: Incorrect TS type definition for FactoryMapInterf.factory() function
 - Bug fix: Incorrect TS type definition for FactoryMapInterf.factory() function, return type should be `any` not `string`
 
 - New function `.fromRoot()`
+
+### 5.1.6
+- Remove acorn from dependencies, use Typescript compiler instead

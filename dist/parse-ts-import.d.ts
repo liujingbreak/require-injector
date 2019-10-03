@@ -8,7 +8,7 @@ export declare class TypescriptParser {
     private _addPatch;
     private _addPatch4Import;
     constructor(esReplacer?: ReplaceRequire | null);
-    replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile): string | null;
+    replace(code: string, factoryMap: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile): string | null;
     parseTsSource(source: string, file: string, ast?: ts.SourceFile): void;
     private traverseTsAst;
 }

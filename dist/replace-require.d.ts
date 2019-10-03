@@ -1,9 +1,8 @@
 /// <reference types="node" />
 import { Transform } from 'stream';
-import { ReplacementInf } from './patch-text';
-import { FactoryMap, ReplaceType, FactoryMapInterf } from './factory-map';
+import { FactoryMap, FactoryMapInterf, ReplaceType } from './factory-map';
 import Injector, { InjectorOption, ResolveOption } from './node-inject';
-import * as acorn from 'acorn';
+import { ReplacementInf } from './patch-text';
 import { TypescriptParser } from './parse-ts-import';
 export interface RequireInjector {
     fromPackage(packageName: string | string[], resolveOpt?: ResolveOption): FactoryMapInterf;
@@ -13,7 +12,6 @@ export interface RequireInjector {
     injectToFile(filePath: string, code: string, ast?: any): string;
     cleanup(): void;
 }
-export declare function replace(code: string, factoryMaps: FactoryMap[], fileParam: any, ast: any): string | null;
 export default class ReplaceRequire extends Injector implements RequireInjector {
     transform: (file: string) => Transform;
     protected tsParser: TypescriptParser;
@@ -36,15 +34,5 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
      * 	same source code will be returned.
      */
     injectToFile(filePath: string, code: string, ast?: any): string;
-    /**
-     * @return null if there is no change
-     */
-    replace(code: string, fm: FactoryMap | FactoryMap[], fileParam: string, ast?: any): string | null;
-    protected onImport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onExport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onImportAsync(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onRequire(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onRequireEnsure(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected addPatch(patches: ReplacementInf[], start: number, end: number, moduleName: string, replaceType: ReplaceType, fmaps: FactoryMap[], fileParam: string): void;
+    addPatch(patches: ReplacementInf[], start: number, end: number, moduleName: string, replaceType: ReplaceType, fmaps: FactoryMap[], fileParam: string): void;
 }
-export declare function parseCode(code: string): acorn.Node;

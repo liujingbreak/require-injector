@@ -7,90 +7,90 @@ var {FactoryMap} = require('../dist/factory-map');
 const vm = require('vm');
 
 const replacer = rj;
-function rr() {
-	return replacer.replace.apply(replacer, arguments);
-}
+// function rr() {
+// 	return replacer.replace.apply(replacer, arguments);
+// }
 describe('replace-require', ()=> {
-	describe('ES6 import', ()=> {
-		it('replaceCode() should work with import * ....', () => {
-			let source = 'import * as _ from \'lodash\';';
-			let fm = new FactoryMap();
-			fm.replaceCode('lodash', '"hellow"');
-			replaced = rr(source, fm, 'test.ts');
-			console.log(replaced);
-			var sandbox = {
-				module: {
-					exports: {}
-				}
-			};
-			vm.runInNewContext(replaced, vm.createContext(sandbox));
-			expect(sandbox._).toBe('hellow');
-		});
+	// xdescribe('ES6 import', ()=> {
+	// 	it('replaceCode() should work with import * ....', () => {
+	// 		let source = 'import * as _ from \'lodash\';';
+	// 		let fm = new FactoryMap();
+	// 		fm.replaceCode('lodash', '"hellow"');
+	// 		replaced = rr(source, fm, 'test.ts');
+	// 		console.log(replaced);
+	// 		var sandbox = {
+	// 			module: {
+	// 				exports: {}
+	// 			}
+	// 		};
+	// 		vm.runInNewContext(replaced, vm.createContext(sandbox));
+	// 		expect(sandbox._).toBe('hellow');
+	// 	});
 
-		it('replaceCode() should work with import default from ...', () => {
-			let source = 'import _ from \'lodash\';';
-			let fm = new FactoryMap();
-			fm.replaceCode('lodash', '{default: "DEFAULT"}');
-			replaced = rr(source, fm, 'test.ts');
-			console.log(replaced);
-			var sandbox = {};
-			vm.runInNewContext(replaced, vm.createContext(sandbox));
-			expect(sandbox._).toBe('DEFAULT');
-		});
+	// 	it('replaceCode() should work with import default from ...', () => {
+	// 		let source = 'import _ from \'lodash\';';
+	// 		let fm = new FactoryMap();
+	// 		fm.replaceCode('lodash', '{default: "DEFAULT"}');
+	// 		replaced = rr(source, fm, 'test.ts');
+	// 		console.log(replaced);
+	// 		var sandbox = {};
+	// 		vm.runInNewContext(replaced, vm.createContext(sandbox));
+	// 		expect(sandbox._).toBe('DEFAULT');
+	// 	});
 
-		it('should work for import with mutiple specfics', ()=> {
-			var fm = new FactoryMap();
-			fm.value('hellow', {replacement: 'sugar'});
-			fm.replaceCode('world', 'daddy');
-			fm.substitute('foobar', '_');
+	// 	it('should work for import with mutiple specfics', ()=> {
+	// 		var fm = new FactoryMap();
+	// 		fm.value('hellow', {replacement: 'sugar'});
+	// 		fm.replaceCode('world', 'daddy');
+	// 		fm.substitute('foobar', '_');
 
-			var result = rr('import {ok as a, nok as b} from "hellow";', fm);
-			expect(/^var __imp[0-9]__ = sugar, a = __imp[0-9]__\["ok"\], b = __imp[0-9]__\["nok"\];$/.test(result)).toBe(true);
+	// 		var result = rr('import {ok as a, nok as b} from "hellow";', fm);
+	// 		expect(/^var __imp[0-9]__ = sugar, a = __imp[0-9]__\["ok"\], b = __imp[0-9]__\["nok"\];$/.test(result)).toBe(true);
 
-			result = rr('import {ok as a, nok as b} from "world";', fm);
-			expect(/^var __imp\d__ = daddy, a = __imp\d__\["ok"\], b = __imp\d__\["nok"\];$/.test(result)).toBe(true);
+	// 		result = rr('import {ok as a, nok as b} from "world";', fm);
+	// 		expect(/^var __imp\d__ = daddy, a = __imp\d__\["ok"\], b = __imp\d__\["nok"\];$/.test(result)).toBe(true);
 
-			result = rr('import {ok as a, nok as b} from "_";', fm);
-			expect(result).toBe(null);
-		});
+	// 		result = rr('import {ok as a, nok as b} from "_";', fm);
+	// 		expect(result).toBe(null);
+	// 	});
 
-		it('should work for import default', ()=> {
-			var fm = new FactoryMap();
-			fm.value('hellow', {replacement: 'sugar'});
-			fm.replaceCode('world', 'daddy');
-			fm.alias('foobar', 'xxx');
+	// 	it('should work for import default', ()=> {
+	// 		var fm = new FactoryMap();
+	// 		fm.value('hellow', {replacement: 'sugar'});
+	// 		fm.replaceCode('world', 'daddy');
+	// 		fm.alias('foobar', 'xxx');
 
-			var result = rr('import A from "hellow";//...', fm);
-			expect(/^var __imp\d__ = sugar, A = __imp\d__\["default"\];\/\/\.\.\.$/.test(result)).toBe(true);
+	// 		var result = rr('import A from "hellow";//...', fm);
+	// 		expect(/^var __imp\d__ = sugar, A = __imp\d__\["default"\];\/\/\.\.\.$/.test(result)).toBe(true);
 
-			result = rr('import * as B from "world";', fm);
-			expect(/^var __imp\d__ = daddy, B = __imp\d__;$/.test(result)).toBe(true);
+	// 		result = rr('import * as B from "world";', fm);
+	// 		expect(/^var __imp\d__ = daddy, B = __imp\d__;$/.test(result)).toBe(true);
 
-			result = rr('import "foobar";', fm);
-			expect(result).toBe('import "xxx";');
+	// 		result = rr('import "foobar";', fm);
+	// 		expect(result).toBe('import "xxx";');
 
-			result = rr('import "world";', fm);
-			expect(/^daddy;$/.test(result)).toBe(true);
+	// 		result = rr('import "world";', fm);
+	// 		expect(/^daddy;$/.test(result)).toBe(true);
 
-			result = rr('import a, {b} from "world";', fm);
-			expect(result).toBe('var __imp8__ = daddy, a = __imp8__["default"], b = __imp8__["b"];');
-		});
+	// 		result = rr('import a, {b} from "world";', fm);
+	// 		expect(result).toBe('var __imp8__ = daddy, a = __imp8__["default"], b = __imp8__["b"];');
+	// 	});
 
-		it('should work for alias', () => {
-			var fm = new FactoryMap();
-			fm.alias('@foo/bar2', 'scrollbar2');
-			fm.alias('@foo/bar', 'scrollbar');
+	// 	it('should work for alias', () => {
+	// 		var fm = new FactoryMap();
+	// 		fm.alias('@foo/bar2', 'scrollbar2');
+	// 		fm.alias('@foo/bar', 'scrollbar');
 
-			var result = rr('import A from "@foo/bar";', fm);
-			expect(result).toBe('import A from "scrollbar";');
+	// 		var result = rr('import A from "@foo/bar";', fm);
+	// 		expect(result).toBe('import A from "scrollbar";');
 
-			result = rr('import B from "@foo/bar/subdir/file.js";', fm);
-			expect(result).toBe('import B from "scrollbar/subdir/file.js";');
+	// 		result = rr('import B from "@foo/bar/subdir/file.js";', fm);
+	// 		expect(result).toBe('import B from "scrollbar/subdir/file.js";');
 
-			result = rr('import A from "ok";', fm);
-			expect(result).toBe(null);
-		});
-	});
+	// 		result = rr('import A from "ok";', fm);
+	// 		expect(result).toBe(null);
+	// 	});
+	// });
 
 	describe('injectToFile for import()', ()=> {
 		it('should work', ()=> {
@@ -105,7 +105,7 @@ describe('replace-require', ()=> {
 		});
 	});
 
-	describe('replace', ()=> {
+	xdescribe('replace', ()=> {
 		it('should work for sample1', function() {
 			var fm = new FactoryMap();
 			fm.value('hellow', {replacement: '__'});

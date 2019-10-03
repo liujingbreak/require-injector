@@ -41,11 +41,11 @@ export class TypescriptParser {
 		moduleName: string, info: ParseInfo) => void;
 	constructor(public esReplacer: ReplaceRequire | null = null) {}
 
-	replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile): string | null {
+	replace(code: string, factoryMap: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile): string | null {
 		let patches: Array<{start: number, end: number, replacement: string}> = [];
 		let self = this;
-		factoryMaps = ([] as FactoryMap[]).concat(factoryMaps);
-		this._addPatch = function(start: number, end: number, moduleName: string, replaceType: ReplaceType) {
+		const factoryMaps = ([] as FactoryMap[]).concat(factoryMap);
+		this._addPatch = function(this: TypescriptParser, start: number, end: number, moduleName: string, replaceType: ReplaceType) {
 			if (! this.esReplacer)
 				return;
 			this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, filePath);
