@@ -5,4 +5,5 @@ export { FactoryMapInterf } from './factory-map';
 export { Injector as default };
 export { RequireInjector } from './replace-require';
 export { InjectorOption, ResolveOption } from './node-inject';
+export { LoaderOptions } from './webpack-loader';
 export declare function getInstance(options: InjectorOption): RequireInjector;

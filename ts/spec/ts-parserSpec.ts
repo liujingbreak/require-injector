@@ -24,7 +24,7 @@ describe('TypescriptParser', () => {
 	var replaced: string | null;
 
 	it('can replace \'import\' and \'require\' statements ', () => {
-		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
+		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts').replaced;
 		console.log('---------------\n%s\n--------------', replaced);
 		expect(/var __imp[0-9]__ = API, api = __imp[0-9]__\["default"\];/.test(replaced!)).toBeTruthy();
 		expect(replaced!.indexOf('import * as _ from "underscore";')).toBeGreaterThanOrEqual(0);
@@ -46,7 +46,7 @@ describe('TypescriptParser', () => {
 		let source = 'import * as _ from \'lodash\';';
 		let fm = new FactoryMap();
 		fm.replaceCode('lodash', '"hellow"');
-		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
+		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts').replaced;
 		var sandbox: any = {
 			module: {
 				exports: {}
@@ -60,7 +60,7 @@ describe('TypescriptParser', () => {
 		let source = 'import \'lodash\';';
 		let fm = new FactoryMap();
 		fm.replaceCode('lodash', 'foobar()');
-		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts');
+		replaced = new TypescriptParser(new EsReplacer()).replace(source, fm, 'test.ts').replaced;
 		expect(replaced).toMatch(/\s*foobar\(\);$/);
 	});
 });

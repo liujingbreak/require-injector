@@ -1,11 +1,8 @@
-## 4.0.0
-### Support Typescript file replacement
-When work with webpack as a loader for '.ts', '.tsx' file , you may put it even before ts-loader.
+### v5.2.0
+Webpack loader is re-written with TS, provide few more useful loader `options` parameters.
 
-### 4.2.2
-Rewrite lib/dir-tree.js in Typescript
 
-### 5.0.0
+## v5.0.0
 Rewrite all functional script with Typescript, fully support Typescript user.
 
 **Breaking changes**
@@ -38,3 +35,12 @@ Bug fix: Incorrect TS type definition for FactoryMapInterf.factory() function
 - Bug fix: Incorrect TS type definition for FactoryMapInterf.factory() function, return type should be `any` not `string`
 
 - New function `.fromRoot()`
+
+## v4.0.0
+### Support Typescript file replacement
+When work with webpack as a loader for '.ts', '.tsx' file , you may put it even before ts-loader.
+
+### 4.2.2
+Rewrite lib/dir-tree.js in Typescript
+
+

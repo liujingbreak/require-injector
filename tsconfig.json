@@ -22,6 +22,8 @@
 		"lib": ["es2016", "es2015"],
 		"pretty": true,
 		"paths": {
+			"require-injector": ["./index.ts"],
+			"require-injector/*": ["./*"],
 			"*": ["../node_modules/*", "../node_modules/@types/*"]
 		}
 	},

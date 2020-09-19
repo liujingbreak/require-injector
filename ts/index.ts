@@ -8,6 +8,7 @@ export {Injector as default};
 export { RequireInjector} from './replace-require';
 
 export {InjectorOption, ResolveOption} from './node-inject';
+export {LoaderOptions} from './webpack-loader';
 
 let instance: RequireInjector;
 export function getInstance(options: InjectorOption): RequireInjector {

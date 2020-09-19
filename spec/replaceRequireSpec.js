@@ -1,3 +1,4 @@
+// @ts-check
 const RJ =  require('..').default;
 var rj = new RJ();
 var Path = require('path');
@@ -7,8 +8,17 @@ var {FactoryMap} = require('../dist/factory-map');
 const vm = require('vm');
 
 const replacer = rj;
-function rr() {
-	return replacer.replace.apply(replacer, arguments);
+
+/**
+ * 
+ * @param {string} source 
+ * @param {FactoryMap} fm 
+ * @param {string} [file]
+ * @returns {string}
+ */
+function runReplaceWithFm(source, fm, file) {
+	replacer.factoryMapsForFile = () => [fm];
+	return replacer.injectToFile(file || 'test.ts', source);
 }
 describe('replace-require', ()=> {
 	describe('ES6 import', ()=> {
@@ -16,7 +26,8 @@ describe('replace-require', ()=> {
 			let source = 'import * as _ from \'lodash\';';
 			let fm = new FactoryMap();
 			fm.replaceCode('lodash', '"hellow"');
-			replaced = rr(source, fm, 'test.ts');
+			replacer.factoryMapsForFile = () => [fm];
+			const replaced = replacer.injectToFile('test.ts', source);
 			console.log(replaced);
 			var sandbox = {
 				module: {
@@ -31,7 +42,9 @@ describe('replace-require', ()=> {
 			let source = 'import _ from \'lodash\';';
 			let fm = new FactoryMap();
 			fm.replaceCode('lodash', '{default: "DEFAULT"}');
-			replaced = rr(source, fm, 'test.ts');
+
+			replacer.factoryMapsForFile = () => [fm];
+			const replaced = replacer.injectToFile('test.ts', source);
 			console.log(replaced);
 			var sandbox = {};
 			vm.runInNewContext(replaced, vm.createContext(sandbox));
@@ -44,14 +57,14 @@ describe('replace-require', ()=> {
 			fm.replaceCode('world', 'daddy');
 			fm.substitute('foobar', '_');
 
-			var result = rr('import {ok as a, nok as b} from "hellow";', fm);
+			var result = runReplaceWithFm('import {ok as a, nok as b} from "hellow";', fm);
 			expect(/^var __imp[0-9]__ = sugar, a = __imp[0-9]__\["ok"\], b = __imp[0-9]__\["nok"\];$/.test(result)).toBe(true);
 
-			result = rr('import {ok as a, nok as b} from "world";', fm);
+			result = runReplaceWithFm('import {ok as a, nok as b} from "world";', fm);
 			expect(/^var __imp\d__ = daddy, a = __imp\d__\["ok"\], b = __imp\d__\["nok"\];$/.test(result)).toBe(true);
 
-			result = rr('import {ok as a, nok as b} from "_";', fm);
-			expect(result).toBe(null);
+			result = runReplaceWithFm('import {ok as a, nok as b} from "_";', fm);
+			expect(result).toEqual('import {ok as a, nok as b} from "_";');
 		});
 
 		it('should work for import default', ()=> {
@@ -60,19 +73,19 @@ describe('replace-require', ()=> {
 			fm.replaceCode('world', 'daddy');
 			fm.alias('foobar', 'xxx');
 
-			var result = rr('import A from "hellow";//...', fm);
+			var result = runReplaceWithFm('import A from "hellow";//...', fm);
 			expect(/^var __imp\d__ = sugar, A = __imp\d__\["default"\];\/\/\.\.\.$/.test(result)).toBe(true);
 
-			result = rr('import * as B from "world";', fm);
+			result = runReplaceWithFm('import * as B from "world";', fm);
 			expect(/^var __imp\d__ = daddy, B = __imp\d__;$/.test(result)).toBe(true);
 
-			result = rr('import "foobar";', fm);
+			result = runReplaceWithFm('import "foobar";', fm);
 			expect(result).toBe('import "xxx";');
 
-			result = rr('import "world";', fm);
+			result = runReplaceWithFm('import "world";', fm);
 			expect(/^daddy;$/.test(result)).toBe(true);
 
-			result = rr('import a, {b} from "world";', fm);
+			result = runReplaceWithFm('import a, {b} from "world";', fm);
 			expect(result).toBe('var __imp8__ = daddy, a = __imp8__["default"], b = __imp8__["b"];');
 		});
 
@@ -81,14 +94,14 @@ describe('replace-require', ()=> {
 			fm.alias('@foo/bar2', 'scrollbar2');
 			fm.alias('@foo/bar', 'scrollbar');
 
-			var result = rr('import A from "@foo/bar";', fm);
+			var result = runReplaceWithFm('import A from "@foo/bar";', fm);
 			expect(result).toBe('import A from "scrollbar";');
 
-			result = rr('import B from "@foo/bar/subdir/file.js";', fm);
+			result = runReplaceWithFm('import B from "@foo/bar/subdir/file.js";', fm);
 			expect(result).toBe('import B from "scrollbar/subdir/file.js";');
 
-			result = rr('import A from "ok";', fm);
-			expect(result).toBe(null);
+			result = runReplaceWithFm('import A from "ok";', fm);
+			expect(result).toBe('import A from "ok";');
 		});
 	});
 
@@ -109,7 +122,7 @@ describe('replace-require', ()=> {
 		it('should work for sample1', function() {
 			var fm = new FactoryMap();
 			fm.value('hellow', {replacement: '__'});
-			var result = rr('require("hellow");', fm);
+			var result = runReplaceWithFm('require("hellow");', fm);
 
 			expect(result).toBe('__;');
 		});
@@ -118,7 +131,7 @@ describe('replace-require', ()=> {
 			var fm = new FactoryMap();
 			fm.value('hellow', {replacement: ''})
 			.replaceCode('a', 'b');
-			var result = rr('require("hellow");require("a");require("hellow");var s = require("b");',
+			var result = runReplaceWithFm('require("hellow");require("a");require("hellow");var s = require("b");',
 				fm);
 
 			expect(result).toBe(';b;;var s = require("b");');
@@ -128,7 +141,7 @@ describe('replace-require', ()=> {
 			var fm = new FactoryMap();
 			fm.value('hellow', {replacement: ''})
 			.replaceCode('a', 'b');
-			var result = rr('require("hellow");obj.require("a");', fm);
+			var result = runReplaceWithFm('require("hellow");obj.require("a");', fm);
 
 			expect(result).toBe(';obj.require("a");');
 		});
@@ -138,12 +151,12 @@ describe('replace-require', ()=> {
 			fm.value('hellow', {replacement: '__'});
 			fm.alias('world', '__');
 
-			var result = rr('require("style-loader!css-loader?modules!hellow");', fm);
+			var result = runReplaceWithFm('require("style-loader!css-loader?modules!hellow");', fm);
 			expect(result).toBe('__;');
-			result = rr('require("style-loader!css-loader?modules!world");', fm);
+			result = runReplaceWithFm('require("style-loader!css-loader?modules!world");', fm);
 			expect(result).toBe('require("style-loader!css-loader?modules!__");');
 
-			result = rr('import "style-loader!css-loader?modules!world";', fm);
+			result = runReplaceWithFm('import "style-loader!css-loader?modules!world";', fm);
 			expect(result).toBe('import "style-loader!css-loader?modules!__";');
 		});
 
@@ -159,9 +172,9 @@ describe('replace-require', ()=> {
 			fm.value('hellow', valueFactory)
 			.value('a', {replacement: 'b'});
 
-			var result = rr('require("hellow");obj.require("a");', fm);
-			expect(valueFactory.replacement).toHaveBeenCalledWith(undefined, undefined);
-			var result2 = rr('require("hellow");obj.require("a");', fm, 'test-file');
+			var result = runReplaceWithFm('require("hellow");obj.require("a");', fm);
+			expect(valueFactory.replacement).toHaveBeenCalledWith('test.ts', undefined);
+			var result2 = runReplaceWithFm('require("hellow");obj.require("a");', fm, 'test-file');
 			expect(valueFactory.replacement).toHaveBeenCalledWith('test-file', undefined);
 
 			expect(result).toBe(';obj.require("a");');
@@ -180,7 +193,7 @@ describe('replace-require', ()=> {
 			spyOn(fm, 'getReplacement').and.callThrough();
 
 			fm.substitute(/[^\{]*(\{\{[^\{]+\}\})/, mockFactory.replacement);
-			var result = rr('require("foo-{{bar}}");', fm, '');
+			var result = runReplaceWithFm('require("foo-{{bar}}");', fm, '');
 			expect(fm.matchRequire).toHaveBeenCalled();
 			expect(fm.getReplacement).toHaveBeenCalled();
 			expect(mockFactory.replacement).toHaveBeenCalled();
@@ -203,7 +216,7 @@ describe('replace-require', ()=> {
 
 			var f = function() {return null;};
 			fm.factory(/xxx/, f);
-			var result = rr('require("foo-{{bar}}");' +
+			var result = runReplaceWithFm('require("foo-{{bar}}");' +
 				'require.ensure(["abc", "efg"], function(){});' +
 				'require("xxx")', fm, '');
 
@@ -223,7 +236,7 @@ describe('replace-require', ()=> {
 			spyOn(fm, 'getReplacement').and.callThrough();
 
 			fm.value(/[^\{]*(\{\{[^\{]+\}\})/, mockFactory);
-			var result = rr('require("foo-{{bar}}");', fm, '');
+			var result = runReplaceWithFm('require("foo-{{bar}}");', fm, '');
 			expect(fm.matchRequire).toHaveBeenCalled();
 			expect(fm.getReplacement).toHaveBeenCalled();
 			expect(mockFactory.replacement).toHaveBeenCalled();
@@ -235,7 +248,7 @@ describe('replace-require', ()=> {
 			fm.substitute('A', 'x')
 			.substitute('B', 'y');
 
-			var result = rr('require.ensure(["A", "B"], function() {});', fm);
+			var result = runReplaceWithFm('require.ensure(["A", "B"], function() {});', fm);
 			expect(result).toBe('require.ensure(["x", "y"], function() {});');
 		});
 	});
