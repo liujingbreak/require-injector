@@ -13,7 +13,7 @@ const options: LoaderOptions = {
   }
 };
 
-export default; function(config: wp.Configuration) {
+export default function(config: wp.Configuration) {
   config.module!.rules.push({
     test: /\.(ts|tsx|js|jsx)$/,
     use: [

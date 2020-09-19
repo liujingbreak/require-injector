@@ -202,8 +202,8 @@ class Injector extends EventEmitter.EventEmitter {
     }
   }
   protected inject(calleeModule: Module, name: string) {
-    // var dir = this.quickSearchDirByFile(calleeModule.id);
-    var fmaps = this.factoryMapsForFile(calleeModule.id);
+    // var dir = this.quickSearchDirByFile(calleeModule.filename);
+    var fmaps = this.factoryMapsForFile(calleeModule.filename);
     if (fmaps.length === 0)
       return this.oldRequire.call(calleeModule, name);
     var injected;
@@ -215,8 +215,8 @@ class Injector extends EventEmitter.EventEmitter {
       if (this.config.debug) {
         log.debug('inject %s', name);
       }
-      injected = factoryMap.getInjected(injector, calleeModule.id, calleeModule, this.oldRequire);
-      this.emit('inject', calleeModule.id);
+      injected = factoryMap.getInjected(injector, calleeModule.filename, calleeModule, this.oldRequire);
+      this.emit('inject', calleeModule.filename);
       return true;
     });
     if (!match)
@@ -229,7 +229,7 @@ class Injector extends EventEmitter.EventEmitter {
       return this.inject(calleeModule, path);
     } catch (e) {
       if (this.config.debug)
-        log.debug('require from : ', calleeModule.id, e.message);
+        log.debug('require from : ', calleeModule.filename, e.message);
       throw e;
     }
   }

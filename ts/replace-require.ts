@@ -5,14 +5,7 @@ import ts from 'typescript';
 import {FactoryMap, ReplaceType, ReplacedResult, FactoryMapInterf} from './factory-map';
 import Injector, {InjectorOption, ResolveOption} from './node-inject';
 import * as _ from 'lodash';
-// const dynamicImport = require('acorn-dynamic-import').default;
-// var estraverse = require('estraverse-fb');
-// const jsx = require('acorn-jsx');
-// let acornjsx = acorn.Parser.extend(jsx());
-// acornjsx.extend(dynamicImport);
-
 import through = require('through2');
-import {parseExport, parse as parseEs6Import} from './parse-esnext-import';
 import {TypescriptParser} from './parse-ts-import';
 
 var log = require('@log4js-node/log4js-api').getLogger('require-injector.replace-require');
@@ -118,138 +111,7 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
     }
   }
 
-  /**
-	 * @return null if there is no change
-	 */
-  // private replace(code: string, fm: FactoryMap | FactoryMap[], fileParam: string, ast?: any) {
-  //   const factoryMaps = ([] as FactoryMap[]).concat(fm);
-  //   var self = this;
-  //   if (!ast) {
-  //     ast = parseCode(code);
-  //     self.emit('ast', ast);
-  //   }
-
-  //   var patches: ReplacementInf[] = [];
-
-  //   estraverse.traverse(ast, {
-  //     enter(node: any, parent: any) {
-  //       if (node.type === 'CallExpression') {
-  //         var calleeType = _.get(node, 'callee.type');
-  //         var callee = node.callee;
-  //         if (calleeType === 'Import') {
-  //           self.onImportAsync(node, factoryMaps, fileParam, patches);
-  //         }
-  //         if (calleeType === 'Identifier') {
-  //           var funcName = _.get(node, 'callee.name');
-  //           if (funcName === 'require')
-  //             self.onRequire(node, factoryMaps, fileParam, patches);
-  //           else if (funcName === 'import')
-  //             self.onImportAsync(node, factoryMaps, fileParam, patches);
-  //         } else if (calleeType === 'MemberExpression' &&
-  //           callee.object.name === 'require' &&
-  //           callee.object.type === 'Identifier' &&
-  //           callee.property.name === 'ensure' &&
-  //           callee.property.type === 'Identifier') {
-  //           self.onRequireEnsure(node, factoryMaps, fileParam, patches);
-  //         }
-  //       } else if (node.type === 'ImportDeclaration') {
-  //         self.onImport(node, factoryMaps, fileParam, patches);
-  //       } else if ((node.type === 'ExportNamedDeclaration' && node.source) ||
-  //         (node.type === 'ExportAllDeclaration' && node.source)) {
-  //         // self.onExport(node, factoryMaps, fileParam, patches);
-  //         // TODO: support `export ... from ...`
-  //       }
-  //     },
-  //     leave(node: any, parent: any) {
-  //     },
-  //     keys: {
-  //       Import: [], JSXText: []
-  //     }
-  //   });
-  //   if (patches.length > 0)
-  //     return patchText(code, patches);
-  //   else
-  //     return null;
-  // }
-
-  protected onImport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]) {
-    var info = parseEs6Import(node);
-    var self = this;
-    _.some(factoryMaps, factoryMap => {
-      var setting = factoryMap.matchRequire(info.from);
-      if (setting) {
-        var replacement = factoryMap.getReplacement(setting, ReplaceType.imp, fileParam, info) as ReplacedResult;
-        if (replacement != null) {
-          patches.push({
-            start: replacement.replaceAll ? node.start : node.source.start,
-            end: replacement.replaceAll ? node.end : node.source.end,
-            replacement: replacement.code
-          });
-          self.emit('replace', info.from, replacement.code);
-        }
-        return true;
-      }
-      return false;
-    });
-  }
-
-  protected onExport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]) {
-    var info = parseExport(node);
-    var self = this;
-    _.some(factoryMaps, factoryMap => {
-      var setting = factoryMap.matchRequire(info.from);
-      if (setting) {
-        var replacement = factoryMap.getReplacement(setting, ReplaceType.imp, fileParam, info) as ReplacedResult;
-        if (replacement != null) {
-          patches.push({
-            start: replacement.replaceAll ? node.start : node.source.start,
-            end: replacement.replaceAll ? node.end : node.source.end,
-            replacement: replacement.code
-          });
-          self.emit('replace', info.from, replacement.code);
-        }
-        return true;
-      }
-      return false;
-    });
-  }
-
-  protected onImportAsync(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]) {
-    var old = _.get(node, 'arguments[0].value');
-    this.addPatch(patches, node.start, node.end, old, ReplaceType.ima, factoryMaps, fileParam);
-  }
-
-  protected onRequire(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]) {
-    var calleeType = _.get(node, 'callee.type');
-    if (calleeType === 'Identifier' &&
-    _.get(node, 'callee.name') === 'require') {
-      var old = _.get(node, 'arguments[0].value');
-      this.addPatch(patches, node.start, node.end, old, ReplaceType.rq, factoryMaps, fileParam);
-    }
-  }
-
-  protected onRequireEnsure(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]) {
-    var self = this;
-    var args = node.arguments;
-    if (args.length === 0) {
-      return;
-    }
-    if (args[0].type === 'ArrayExpression') {
-      args[0].elements.forEach((nameNode: any) => {
-        if (nameNode.type !== 'Literal') {
-          log.error('require.ensure() should be called with String literal');
-          return;
-        }
-        var old = nameNode.value;
-        self.addPatch(patches, nameNode.start, nameNode.end, old, ReplaceType.rs, factoryMaps, fileParam);
-      });
-    } else if (args[0].type === 'Literal') {
-      var old = _.get(node, 'arguments[0].value');
-      self.addPatch(patches, args[0].start, args[0].end, old, ReplaceType.rs, factoryMaps, fileParam);
-    }
-  }
-
-  protected addPatch(patches: ReplacementInf[], start: number, end: number, moduleName: string,
+  addPatch(patches: ReplacementInf[], start: number, end: number, moduleName: string,
     replaceType: ReplaceType, fmaps: FactoryMap[], fileParam: string) {
     var self = this;
     var setting;

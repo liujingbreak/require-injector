@@ -46,15 +46,15 @@ export class TypescriptParser {
 
     let patches: Array<{start: number, end: number, replacement: string}> = [];
     let self = this;
-    factoryMaps = ([] as FactoryMap[]).concat(factoryMaps);
-    this._addPatch = function(start: number, end: number, moduleName: string, replaceType: ReplaceType) {
+    const _factoryMaps = ([] as FactoryMap[]).concat(factoryMaps);
+    this._addPatch = function(this: TypescriptParser, start: number, end: number, moduleName: string, replaceType: ReplaceType) {
       if (! this.esReplacer)
         return;
-      this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, factoryMaps, filePath);
+      this.esReplacer.addPatch(patches, start, end, moduleName, replaceType, _factoryMaps, filePath);
     };
     this._addPatch4Import = function(allStart: number, allEnd: number, start: number, end: number,
       moduleName: string, info: ParseInfo) {
-      _.some(factoryMaps, (factoryMap: FactoryMap) => {
+        _factoryMaps.some((factoryMap: FactoryMap) => {
         var setting = factoryMap.matchRequire(info.from);
         if (setting) {
           var replacement = factoryMap.getReplacement(setting, ReplaceType.imp, filePath, info) as ReplacedResult;

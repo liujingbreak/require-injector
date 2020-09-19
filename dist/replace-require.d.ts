@@ -48,13 +48,5 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
         }>;
         ast: ts.SourceFile;
     };
-    /**
-       * @return null if there is no change
-       */
-    protected onImport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onExport(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onImportAsync(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onRequire(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected onRequireEnsure(node: any, factoryMaps: FactoryMap[], fileParam: string, patches: ReplacementInf[]): void;
-    protected addPatch(patches: ReplacementInf[], start: number, end: number, moduleName: string, replaceType: ReplaceType, fmaps: FactoryMap[], fileParam: string): void;
+    addPatch(patches: ReplacementInf[], start: number, end: number, moduleName: string, replaceType: ReplaceType, fmaps: FactoryMap[], fileParam: string): void;
 }
