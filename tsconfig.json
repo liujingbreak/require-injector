@@ -12,6 +12,7 @@
 		"esModuleInterop": true,
 		"moduleResolution": "node",
 		"inlineSourceMap": true,
+		"inlineSources": true,
 		"skipLibCheck": false,
 		"experimentalDecorators": true,
 		"emitDecoratorMetadata": true,
