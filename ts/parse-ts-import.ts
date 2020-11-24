@@ -1,5 +1,5 @@
 // tslint:disable:max-line-length
-import * as ts from 'typescript';
+import * as _ts from 'typescript';
 import * as fs from 'fs';
 import * as Path from 'path';
 import * as _ from 'lodash';
@@ -11,18 +11,18 @@ import ReplaceRequire from './replace-require';
 export function parseTs(file: string) {
   // let source = fs.readFileSync(Path.resolve(__dirname, '../../ts/spec/test-ts.txt'), 'utf8');
   let source = fs.readFileSync(Path.resolve(file), 'utf8');
-  let sFile = ts.createSourceFile('test-ts.ts', source,
-    ts.ScriptTarget.ES2015);
+  let sFile = _ts.createSourceFile('test-ts.ts', source,
+    _ts.ScriptTarget.ES2015);
   traverse(sFile);
-  function traverse(ast: ts.Node, level = 0) {
+  function traverse(ast: _ts.Node, level = 0) {
     // tslint:disable-next-line:no-console
-    console.log(_.repeat(' |- ', level) + ts.SyntaxKind[ast.kind]);
-    if (ast.kind === ts.SyntaxKind.ImportDeclaration) {
+    console.log(_.repeat(' |- ', level) + _ts.SyntaxKind[ast.kind]);
+    if (ast.kind === _ts.SyntaxKind.ImportDeclaration) {
       // tslint:disable-next-line:no-console
       console.log('found import statement', ast.getText(sFile));
     }
     // let count = 0;
-    ast.forEachChild((sub: ts.Node) => {
+    ast.forEachChild((sub: _ts.Node) => {
       traverse(sub, level + 1);
       // count++;
     });
@@ -34,14 +34,15 @@ export function parseTs(file: string) {
 }
 
 export class TypescriptParser {
-  srcfile: ts.SourceFile;
+  srcfile: _ts.SourceFile;
 
   private _addPatch: (start: number, end: number, moduleName: string, replaceType: ReplaceType) => void;
   private _addPatch4Import: (allStart: number, allEnd: number, start: number, end: number,
     moduleName: string, info: ParseInfo) => void;
-  constructor(public esReplacer: ReplaceRequire | null = null) {}
 
-  replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, filePath: string, ast?: ts.SourceFile):
+  constructor(public esReplacer: ReplaceRequire | null = null, public ts = _ts) {}
+
+  replace(code: string, factoryMaps: FactoryMap[] | FactoryMap, filePath: string, ast?: _ts.SourceFile):
     {replaced: string | null, patches: Array<{start: number, end: number, replacement: string}>} {
 
     let patches: Array<{start: number, end: number, replacement: string}> = [];
@@ -80,10 +81,10 @@ export class TypescriptParser {
     };
   }
 
-  parseTsSource(source: string, file: string, ast?: ts.SourceFile): void {
-    this.srcfile = ast || ts.createSourceFile(file, source, ts.ScriptTarget.ESNext,
-      true, ts.ScriptKind.TSX);
-    const asts: ts.Node[] = [...this.srcfile.statements];
+  parseTsSource(source: string, file: string, ast?: _ts.SourceFile): void {
+    this.srcfile = ast || this.ts.createSourceFile(file, source, this.ts.ScriptTarget.ESNext,
+      true, this.ts.ScriptKind.TSX);
+    const asts: _ts.Node[] = [...this.srcfile.statements];
     let node = asts.shift();
     while (node != null) {
       this.traverseTsAst(node, this.srcfile, asts);
@@ -91,16 +92,16 @@ export class TypescriptParser {
     }
   }
 
-  private traverseTsAst(ast: ts.Node, srcfile: ts.SourceFile, visitLater: ts.Node[]) {
-    let SyntaxKind = ts.SyntaxKind;
+  private traverseTsAst(ast: _ts.Node, srcfile: _ts.SourceFile, visitLater: _ts.Node[]) {
+    let SyntaxKind = this.ts.SyntaxKind;
     if (ast.kind === SyntaxKind.ImportDeclaration || ast.kind === SyntaxKind.ExportDeclaration) {
-      let node = ast as ts.ImportDeclaration;
+      let node = ast as _ts.ImportDeclaration;
       // console.log('found import statement:', ast.getText(srcfile));
       let parseInfo = new ParseInfo();
       if (!node.moduleSpecifier && ast.kind === SyntaxKind.ExportDeclaration) {
         return;
       }
-      parseInfo.from = (node.moduleSpecifier as ts.StringLiteral).text;
+      parseInfo.from = (node.moduleSpecifier as _ts.StringLiteral).text;
 
       // parseInfo.from = /^[ '"]*([^'"]+)[ '"]*$/.exec(srcfile.text.substring(node.moduleSpecifier.getStart(this.srcfile, false), node.moduleSpecifier.getEnd()))[1];
       if (_.get(node, 'importClause.name')) {
@@ -121,28 +122,28 @@ export class TypescriptParser {
       // console.log(getTextOf(node.moduleSpecifier, srcfile));
       return;
     } else if (ast.kind === SyntaxKind.CallExpression) {
-      let node = ast as ts.CallExpression;
+      let node = ast as _ts.CallExpression;
       if (node.expression.kind === SyntaxKind.Identifier &&
-        (node.expression as ts.Identifier).text === 'require' &&
+        (node.expression as _ts.Identifier).text === 'require' &&
         node.arguments[0].kind === SyntaxKind.StringLiteral) {
         // console.log('Found', getTextOf(node, srcfile));
-        this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, ReplaceType.rq);
+        this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as _ts.StringLiteral).text, ReplaceType.rq);
         return;
       } else if (node.expression.kind === SyntaxKind.ImportKeyword) {
         // console.log('Found import() ', node.arguments.map(arg => (arg as any).text));
-        this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as ts.StringLiteral).text, ReplaceType.ima);
+        this._addPatch(node.getStart(this.srcfile, false), node.getEnd(), (node.arguments[0] as _ts.StringLiteral).text, ReplaceType.ima);
         return;
       } else if (node.expression.kind === SyntaxKind.PropertyAccessExpression) {
-        let left = (node.expression as ts.PropertyAccessExpression).expression;
-        let right = (node.expression as ts.PropertyAccessExpression).name;
-        if (left.kind === SyntaxKind.Identifier && (left as ts.Identifier).text === 'require' &&
-        right.kind === SyntaxKind.Identifier && (right as ts.Identifier).text === 'ensure') {
+        let left = (node.expression as _ts.PropertyAccessExpression).expression;
+        let right = (node.expression as _ts.PropertyAccessExpression).name;
+        if (left.kind === SyntaxKind.Identifier && (left as _ts.Identifier).text === 'require' &&
+        right.kind === SyntaxKind.Identifier && (right as _ts.Identifier).text === 'ensure') {
           node.arguments.forEach((arg) => {
             if (arg.kind === SyntaxKind.StringLiteral) {
-              this._addPatch(arg.getStart(this.srcfile, false), arg.getEnd(), (arg as ts.StringLiteral).text, ReplaceType.rs);
+              this._addPatch(arg.getStart(this.srcfile, false), arg.getEnd(), (arg as _ts.StringLiteral).text, ReplaceType.rs);
               // console.log(`replace require.ensure(${(arg as ts.StringLiteral).text})`);
             } else if (arg.kind === SyntaxKind.ArrayLiteralExpression) {
-              const arrArg = arg as ts.ArrayLiteralExpression;
+              const arrArg = arg as _ts.ArrayLiteralExpression;
               for (const moduleNameAst of arrArg.elements) {
                 if (moduleNameAst.kind !== SyntaxKind.StringLiteral) {
                   // tslint:disable-next-line:no-console
@@ -150,7 +151,7 @@ export class TypescriptParser {
                   continue;
                 }
                 this._addPatch(moduleNameAst.getStart(this.srcfile, false),
-                  moduleNameAst.getEnd(), (moduleNameAst as ts.StringLiteral).text, ReplaceType.rs);
+                  moduleNameAst.getEnd(), (moduleNameAst as _ts.StringLiteral).text, ReplaceType.rs);
               }
             }
           });

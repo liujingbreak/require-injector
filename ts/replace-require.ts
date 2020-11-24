@@ -60,6 +60,10 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
     };
   }
 
+  changeTsCompiler(tsCompiler: typeof ts) {
+    this.tsParser.ts = tsCompiler;
+  }
+
   cleanup() {
     this.removeAllListeners('replace');
     super.cleanup();

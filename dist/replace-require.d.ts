@@ -21,6 +21,7 @@ export default class ReplaceRequire extends Injector implements RequireInjector 
        * 	this will expose original source file path in code, default is `false`.
        */
     constructor(opts?: InjectorOption);
+    changeTsCompiler(tsCompiler: typeof ts): void;
     cleanup(): void;
     /**
        * Here "inject" is actually "replacement".

@@ -1,6 +1,7 @@
 ### v5.2.0
 Webpack loader is re-written with TS, provide few more useful loader `options` parameters.
 
+A new function `changeTsCompiler(ts: typeof import('typescript'))` on Injector
 
 ## v5.0.0
 Rewrite all functional script with Typescript, fully support Typescript user.
