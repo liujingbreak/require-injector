@@ -1,4 +1,8 @@
-
+```
+ ╦═╗ ╔═╗ ╔═╗  ╦ ╦ ╦ ╦═╗ ╔═╗      ╦ ╔╗╔  ╦ ╔═╗ ╔═╗ ╔╦╗ ╔═╗ ╦═╗ 
+ ╠╦╝ ║╣  ║═╬╗ ║ ║ ║ ╠╦╝ ║╣       ║ ║║║  ║ ║╣  ║    ║  ║ ║ ╠╦╝ 
+ ╩╚═ ╚═╝ ╚═╝╚ ╚═╝ ╩ ╩╚═ ╚═╝      ╩ ╝╚╝ ╚╝ ╚═╝ ╚═╝  ╩  ╚═╝ ╩╚═
+```
 # require-injector
 ![Travis CI](https://travis-ci.org/liujingbreak/require-injector.svg?branch=master)
 
@@ -6,18 +10,17 @@
 Injecting and replacing `require()` and `import` statement in both NodeJS and browser side JS or Typescript file via packing tool like Webpack.
 
 When it is used for Node, it is a little bit like [app-module-path](https://www.npmjs.com/package/app-module-path),
-when it is used for browser environment JS bundle tool, it is like Webpack 2 `resolve.alias` configuration, but more fine-grained.
-> You may use it as a simple IoC container, which helps you decouple modules.
+when it is used for browser environment JS bundle tool, it is like Webpack `resolve.alias` configuration, but more fine-grained.
 
-> Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
+You may use it as a simple IoC container, which helps you decouple modules. Or if you just want to replace some third-party package's dependency without doing git-fork and create a whole new package.
 
+> Be aware that Node.js ECMAScript modules is not supported at this moment.
 
-- [require-injector](#require-injector)
 - [Installation](#installation)
 - [Node project example](#node-project-example)
-- [Injection for local files](#injection-for-local-files)
-- [No relative path needed in require()](#no-relative-path-needed-in-require)
-- [Injection for Node packages](#injection-for-node-packages)
+	- [Injection for local files](#injection-for-local-files)
+	- [No relative path needed in require()](#no-relative-path-needed-in-require)
+	- [Injection for Node packages](#injection-for-node-packages)
 - [Browserify transform](#browserify-transform)
 - [Webpack loader](#webpack-loader)
 - [Webpack-like split loading module replacement: `require.ensure()`](#webpack-like-split-loading-module-replacement-requireensure)
@@ -27,29 +30,29 @@ when it is used for browser environment JS bundle tool, it is like Webpack 2 `re
 - [Support as Webapck loader to replace Typescript file](#support-as-webapck-loader-to-replace-typescript-file)
 - [Injection for server side Swig template](#injection-for-server-side-swig-template)
 - [Injector API](#injector-api)
-- [require('require-injector')( `{object}` opts )](#requirerequire-injector-object-opts)
-	- [Parameters](#parameters)
-- [fromPackage( `{string|array}` nodePackageName, `{function}` resolve, `{object}` opts)](#frompackage-stringarray-nodepackagename-function-resolve-object-opts)
-	- [Parameters](#parameters-1)
-- [fromDir( `{string|array}` directory)](#fromdir-stringarray-directory)
-	- [Parameters](#parameters-2)
-- [transform(filePath)](#transformfilepath)
-- [injectToFile(`{string}` filePath, `{string}` code, `{object}` ast)](#injecttofilestring-filepath-string-code-object-ast)
-	- [Parameters](#parameters-3)
-- [cleanup()](#cleanup)
+	- [require('require-injector')( `{object}` opts )](#requirerequire-injector-object-opts-)
+		- [Parameters](#parameters)
+	- [fromPackage( `{string|array}` nodePackageName, `{function}` resolve, `{object}` opts)](#frompackage-stringarray-nodepackagename-function-resolve-object-opts)
+		- [Parameters](#parameters-1)
+	- [fromDir( `{string|array}` directory)](#fromdir-stringarray-directory)
+		- [Parameters](#parameters-2)
+	- [transform(filePath)](#transformfilepath)
+	- [injectToFile(`{string}` filePath, `{string}` code, `{object}` ast)](#injecttofilestring-filepath-string-code-object-ast)
+		- [Parameters](#parameters-3)
+	- [cleanup()](#cleanup)
 - [Events](#events)
-- ["inject" event](#%22inject%22-event)
-- ["replace" event](#%22replace%22-event)
-- ["ast" event](#%22ast%22-event)
+	- ["inject" event](#inject-event)
+	- ["replace" event](#replace-event)
+	- ["ast" event](#ast-event)
 - [FactoryMap API](#factorymap-api)
-- [substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
-	- [Parameters](#parameters-4)
-- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
-	- [Parameters](#parameters-5)
-- [replaceCode(`{string|RegExp}` moduleName, `{string | function}` jsCode)](#replacecodestringregexp-modulename-string--function-jscode)
-- [value(`{string|RegExp}` requiredModule, `{*|function}` value)](#valuestringregexp-requiredmodule-function-value)
-	- [Parameters](#parameters-6)
-- [swigTemplateDir(`{string}` packageName, `{string}` dir)](#swigtemplatedirstring-packagename-string-dir)
+	- [substitute(`{string|RegExp}` requiredModule, `{string|function}` newModule)](#substitutestringregexp-requiredmodule-stringfunction-newmodule)
+		- [Parameters](#parameters-4)
+	- [factory(`{string|RegExp}` requiredModule, `{function}` factory)](#factorystringregexp-requiredmodule-function-factory)
+		- [Parameters](#parameters-5)
+	- [replaceCode(`{string|RegExp}` moduleName, `{string | function}` jsCode)](#replacecodestringregexp-modulename-string--function-jscode)
+	- [value(`{string|RegExp}` requiredModule, `{*|function}` value)](#valuestringregexp-requiredmodule-function-value)
+		- [Parameters](#parameters-6)
+	- [swigTemplateDir(`{string}` packageName, `{string}` dir)](#swigtemplatedirstring-packagename-string-dir)
 
 ### Installation
 ```
