@@ -1,3 +1,5 @@
+### v5.2.1
+Remove `@types/jasmine` from dependencies, since it is conflict with Jest for many React projects.
 ### v5.2.0
 Webpack loader is re-written with TS, provide few more useful loader `options` parameters.
 
