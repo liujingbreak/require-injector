@@ -15,7 +15,6 @@ export interface InjectorOption {
        * set this property to `true`
        */
     noNode?: boolean;
-    resolve?: (path: string) => string;
     resolveOpts?: any;
     debug?: boolean;
 }

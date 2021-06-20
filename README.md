@@ -319,14 +319,12 @@ call actually goes to its management.
 - `opts.debug`: `{boolean}` if true, log4js will be enabled to print out logs
 
 
-#### fromPackage( `{string|array}` nodePackageName, `{function}` resolve, `{object}` opts)
+#### fromPackage( `{string|array}` nodePackageName, `{basedir: string}` opts)
 Adding one or multiple packages to injection setting, all files under this package's directory will be injectable. This function calls `.fromDir()` internally.
 ##### Parameters
 - `nodePackageName`: Node package's name or array of multiple package names
-- `resolve`: optional, if this parameter is a function, it will be used to locate package directory, default is [resolve](https://www.npmjs.com/package/resolve)`.sync`
 
-	If the package is a Browserify package, you may use [browser-resolve](https://www.npmjs.com/package/browser-resolve)`.sync`. Or you turn on global option `{noNode: true}`, then it will by default use browser-resolve.sync.‘’
-- `opts`: optional, options object passed to [resolve](https://www.npmjs.com/package/resolve),
+- `opts`: optional, `{basedir}` default is current directory `process.cwd()`, lookup package from `basedir/node_modules/<pkg>, basedir/../node_modules/<pkg>, ...`,
 
 Underneath, it uses [resolve](https://www.npmjs.com/package/resolve) to locate package's root directory, which mean it could not only be a Node package, but also a _Browser_ side package which has a "`browser`" property instead of "`main`" property in package.json, you may use [browserResolve](https://www.npmjs.com/package/browser-resolve).sync instead of [resolve](https://www.npmjs.com/package/resolve).
 

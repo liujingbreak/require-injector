@@ -1,10 +1,8 @@
 import Module = require('module');
-import * as  _ from 'lodash';
-const resolve = require('resolve').sync;
-const mothership = require('mothership').sync;
 import EventEmitter from 'events';
 import Path from 'path';
 import * as fs from 'fs';
+import _ from 'lodash';
 import {DirTree} from './dir-tree';
 var log = require('@log4js-node/log4js-api').getLogger('require-injector.node-inject');
 
@@ -33,7 +31,7 @@ export interface InjectorOption {
 	 * set this property to `true`
 	 */
   noNode?: boolean;
-  resolve?: (path: string) => string;
+  // resolve?: (path: string) => string;
   resolveOpts?: any;
   debug?: boolean;
 }
@@ -86,32 +84,22 @@ class Injector extends EventEmitter.EventEmitter {
   }
 
   _fromPackage(packageName: string, resolveOpts?: ResolveOption): FactoryMapInterf {
-    var resolveSync = resolve;
-    if (this.config.resolve) {
-      resolveSync = this.config.resolve;
-    }
-
-    // if (_.isFunction(resolveOpts)) {
-    //   resolveSync = resolveOpts;
-    //   resolveOpts = arguments[2];
-    // }
-
+    // var resolveSync = resolve;
     if (!resolveOpts) {
       resolveOpts = this.config.resolveOpts;
     }
-    var mainJsPath, jsonPath;
-    try {
-      mainJsPath = resolveSync(packageName, resolveOpts);
-      jsonPath = mothership(mainJsPath, function(json: {[k: string]: any}) {
-        return json.name === packageName;
-      }).path;
-    } catch (e) {
-      if (e.code === 'MODULE_NOT_FOUND') {
-        log.info(packageName + ' is not Found, will be skipped from .fromPackage()');
-        return emptyFactoryMap;
+    let dir = resolveOpts?.basedir || process.cwd();
+    const {root: rootDir} = Path.parse(dir);
+    let jsonPath: string | undefined;
+    do {
+      const testPkgJson = Path.resolve(dir, 'node_modules', packageName, 'package.json');
+      if (fs.existsSync(testPkgJson)) {
+        jsonPath = testPkgJson;
+        break;
+      } else {
+        dir = Path.dirname(dir);
       }
-      throw e;
-    }
+    } while (dir !== rootDir);
     if (jsonPath == null) {
       log.info(packageName + ' is not Found, will be skipped from .fromPackage()');
       return emptyFactoryMap;
@@ -197,8 +185,6 @@ class Injector extends EventEmitter.EventEmitter {
       Module.prototype.require = function(path) {
         return self.replacingRequire(this, path);
       } as NodeJS.Require;
-    } else {
-      this.config.resolve = this.config.resolve ? this.config.resolve : require('browser-resolve').sync;
     }
   }
   protected inject(calleeModule: Module, name: string) {

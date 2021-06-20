@@ -1,3 +1,5 @@
+### v5.3.0
+Remove old dependencies to eliminate warnning message for NPM v7.x
 ### v5.2.1
 Remove `@types/jasmine` from dependencies, since it is conflict with Jest for many React projects.
 ### v5.2.0

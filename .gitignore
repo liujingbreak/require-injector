@@ -8,3 +8,4 @@ config.local.yaml
 .vscode
 yarn-*
 yarn.*
+/cache
