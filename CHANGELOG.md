@@ -1,3 +1,5 @@
+### v5.3.1
+Remove cache directory from package
 ### v5.3.0
 Remove old dependencies to eliminate warnning message for NPM v7.x
 ### v5.2.1
