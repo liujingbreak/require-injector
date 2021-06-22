@@ -1,3 +1,5 @@
+### v5.3.2
+Remove useless files
 ### v5.3.1
 Remove cache directory from package
 ### v5.3.0
