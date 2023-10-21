@@ -1,4 +1,5 @@
 ### v5.3.2
+Move obsolete @types/webpack to devDependencies to avoid being installed
 Remove useless files
 ### v5.3.1
 Remove cache directory from package
